@@ -47,7 +47,8 @@ function App() {
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState('week');
-
+  const [transcript, setTranscript] = useState('');
+  const [recording, setRecording] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [manualEvent, setManualEvent] = useState({
     date: '', startTime: '', endTime: '',
@@ -57,12 +58,11 @@ function App() {
     type: TYPE_OPTIONS[0].value,
     userId: USER_ID,
   });
-
   const [editMode, setEditMode] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
   const recognitionRef = useRef(null);
 
-  // 1) Load schedules
+  // Load schedules
   useEffect(() => {
     (async () => {
       try {
@@ -142,16 +142,31 @@ function App() {
 
   // Speech Recognition
   const startRecognition = () => {
-    if (!('webkitSpeechRecognition' in window)) return;
+    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      console.warn('이 브라우저는 Web Speech API를 지원하지 않습니다.');
+      return;
+    }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const rec = new SR();
     rec.lang = 'ko-KR';
-    rec.interimResults = false;
+    rec.interimResults = true;
     rec.maxAlternatives = 1;
-    rec.onstart = () => console.log('음성 인식 시작');
-    rec.onresult = e => console.log('인식된 음성:', e.results[0][0].transcript);
-    rec.onerror = console.error;
-    rec.onend = () => console.log('음성 인식 종료');
+
+    rec.onstart = () => {
+      setRecording(true);
+      setTranscript('');
+    };
+
+    rec.onresult = event => {
+      const text = Array.from(event.results)
+        .map(r => r[0].transcript)
+        .join('');
+      setTranscript(text);
+    };
+
+    rec.onerror = err => console.error('음성 인식 에러:', err);
+    rec.onend = () => setRecording(false);
+
     recognitionRef.current = rec;
     rec.start();
   };
@@ -183,7 +198,7 @@ function App() {
   const handleManualSubmit = async e => {
     e.preventDefault();
     const { date, startTime, endTime, title, memo, color, categoryCode, priority, type, userId } = manualEvent;
-    if (!date || !startTime || !endTime || !title) return console.warn('필수 입력 누락');
+    if (!date || !startTime || !endTime || !title) return;
     const start = dayjs.tz(`${date} ${startTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     const end = dayjs.tz(`${date} ${endTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     const tmpId = `tmp-${Date.now()}`;
@@ -228,7 +243,11 @@ function App() {
     const updatedEvt = { ...editEvent, start, end, memo, color, categoryCode, priority, type };
     setEvents(prev => prev.map(ev => ev.id === _id ? updatedEvt : ev));
     setEditMode(false);
-    try { await updateSchedule(updatedEvt); } catch (err) { console.error(err); }
+    try {
+      await updateSchedule(updatedEvt);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Drag & Drop
@@ -236,14 +255,22 @@ function App() {
     const updated = { ...event, start, end };
     setEvents(prev => prev.map(ev => ev.id === event.id ? updated : ev));
     if (event._id) {
-      try { await updateSchedule(updated); } catch (err) { console.error(err); }
+      try {
+        await updateSchedule(updated);
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
   const onEventResize = async ({ event, start, end }) => {
     const updated = { ...event, start, end };
     setEvents(prev => prev.map(ev => ev.id === event.id ? updated : ev));
     if (event._id) {
-      try { await updateSchedule(updated); } catch (err) { console.error(err); }
+      try {
+        await updateSchedule(updated);
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 
@@ -273,24 +300,33 @@ function App() {
       </header>
 
       <main className="max-w-5xl mx-auto space-y-8">
+        {/* 음성 버튼 */}
         <div className="flex justify-center space-x-4">
-          {!recognitionRef.current ? (
+          {!recording ? (
             <button
               onClick={startRecognition}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full shadow-lg hover:from-blue-600 hover:to-indigo-600 transition"
+              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
             >
               음성 인식 시작
             </button>
           ) : (
             <button
               onClick={stopRecognition}
-              className="px-6 py-3 bg-gradient-to-r from-red-400 to-pink-500 text-white rounded-full shadow-lg hover:from-red-500 hover:to-pink-600 transition"
+              className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
             >
               음성 인식 중지
             </button>
           )}
         </div>
 
+        {/* 실시간 인식 텍스트 박스: recording 중이거나 transcript 있을 때만 */}
+        {(recording || transcript) && (
+          <div className="max-w-5xl mx-auto bg-gray-200 rounded-md p-4 text-gray-800 mb-6 min-h-[3rem]">
+            {transcript || '음성을 인식 중입니다...'}
+          </div>
+        )}
+
+        {/* Calendar */}
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl p-8">
           <DnDCalendar
             localizer={localizer}
@@ -384,7 +420,7 @@ function App() {
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              {/* 색상 */}
+              {/* 색상 선택 */}
               <div>
                 <label className="block text-gray-700 mb-1">색상 선택</label>
                 <div className="flex space-x-2">
@@ -393,7 +429,9 @@ function App() {
                       key={color}
                       type="button"
                       onClick={() => setManualEvent(prev => ({ ...prev, color }))}
-                      className={`w-8 h-8 rounded-full border-2 ${manualEvent.color === color ? 'border-gray-800' : 'border-transparent'}`}
+                      className={`w-8 h-8 rounded-full border-2 ${
+                        manualEvent.color === color ? 'border-gray-800' : 'border-transparent'
+                      }`}
                       style={{ backgroundColor: color }}
                     />
                   ))}
@@ -528,7 +566,7 @@ function App() {
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              {/* 색상 */}
+              {/* 색상 선택 */}
               <div>
                 <label className="block text-gray-700 mb-1">색상 선택</label>
                 <div className="flex space-x-2">
