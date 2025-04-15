@@ -1,5 +1,6 @@
 // src/App.js
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -10,6 +11,14 @@ import timezone from 'dayjs/plugin/timezone';
 import moment from 'moment';
 import 'moment/locale/ko';
 import CustomToolbar from './CustomToolbar';
+import Login from './components/Login';
+import Register from './components/Register';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+import Profile from './components/Profile';
+import PrivateRoute from './components/PrivateRoute';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import api from './services/api';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -41,22 +50,23 @@ const TYPE_OPTIONS = [
   { value: 'deadline', label: '기한' },
   { value: 'repeat', label: '반복' },
 ];
-const USER_ID = '642a7f5c9e7f4b2a1c123456';
 
-function App() {
+// Calendar component separated for use with PrivateRoute
+function CalendarApp() {
+  const { currentUser, token, logout } = useAuth();
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState('week');
   const [transcript, setTranscript] = useState('');
   const [recording, setRecording] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [manualEvent, setManualEvent] = useState({
     date: '', startTime: '', endTime: '',
     title: '', memo: '', color: pastelColors[0],
     categoryCode: CATEGORY_OPTIONS[0].value,
     priority: PRIORITY_OPTIONS[1].value,
     type: TYPE_OPTIONS[0].value,
-    userId: USER_ID,
   });
   const [editMode, setEditMode] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
@@ -66,9 +76,7 @@ function App() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/schedules');
-        if (!res.ok) throw new Error('Load failed');
-        const data = await res.json();
+        const data = await api.schedules.getAll();
         setEvents(data.map(item => ({
           id: item._id,
           _id: item._id,
@@ -80,18 +88,19 @@ function App() {
           categoryCode: item.categoryCode,
           priority: item.priority,
           type: item.type,
-          userId: item.userId,
         })));
       } catch (err) {
         console.error('일정 불러오기 중 에러:', err);
+        if (err.message === '인증 실패') {
+          logout();
+        }
       }
     })();
-  }, []);
+  }, [logout]);
 
   // Create schedule
   const createSchedule = async evt => {
     const body = {
-      userId: evt.userId,
       title: evt.title,
       description: evt.memo,
       startTime: evt.start.toISOString(),
@@ -105,16 +114,8 @@ function App() {
       isCompleted: false,
       color: evt.color,
     };
-    const res = await fetch('http://localhost:3000/api/schedules', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Create failed');
-    }
-    return (await res.json()).schedule;
+    const result = await api.schedules.create(body);
+    return result.schedule;
   };
 
   // Update schedule
@@ -129,15 +130,7 @@ function App() {
       type: evt.type,
       color: evt.color,
     };
-    const res = await fetch(`http://localhost:3000/api/schedules/${evt._id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Update failed');
-    }
+    return api.schedules.update(evt._id, body);
   };
 
   // Speech Recognition
@@ -185,7 +178,6 @@ function App() {
       categoryCode: CATEGORY_OPTIONS[0].value,
       priority: PRIORITY_OPTIONS[1].value,
       type: TYPE_OPTIONS[0].value,
-      userId: USER_ID,
     });
     setShowModal(true);
   };
@@ -197,12 +189,12 @@ function App() {
 
   const handleManualSubmit = async e => {
     e.preventDefault();
-    const { date, startTime, endTime, title, memo, color, categoryCode, priority, type, userId } = manualEvent;
+    const { date, startTime, endTime, title, memo, color, categoryCode, priority, type } = manualEvent;
     if (!date || !startTime || !endTime || !title) return;
     const start = dayjs.tz(`${date} ${startTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     const end = dayjs.tz(`${date} ${endTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     const tmpId = `tmp-${Date.now()}`;
-    const tmpEvt = { id: tmpId, title, start, end, memo, color, categoryCode, priority, type, userId };
+    const tmpEvt = { id: tmpId, title, start, end, memo, color, categoryCode, priority, type };
     setEvents(prev => [...prev, tmpEvt]);
     setShowModal(false);
     try {
@@ -294,9 +286,16 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <header className="max-w-5xl mx-auto mb-6 text-center">
-        <h1 className="text-4xl font-extrabold text-gray-800 mb-2">Voice Manager</h1>
-        <p className="text-gray-600">AI-powered 스케줄러</p>
+      <header className="max-w-5xl mx-auto mb-6 flex justify-between items-center">
+        <h1 className="text-4xl font-extrabold text-gray-800">Voice Manager</h1>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowProfileModal(true)}
+            className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-md hover:bg-indigo-200 transition"
+          >
+            {currentUser?.name || currentUser?.email}
+          </button>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto space-y-8">
@@ -479,7 +478,6 @@ function App() {
                   ))}
                 </select>
               </div>
-              <input type="hidden" name="userId" value={manualEvent.userId} />
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
@@ -498,6 +496,11 @@ function App() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 프로필 모달 */}
+      {showProfileModal && (
+        <Profile onClose={() => setShowProfileModal(false)} />
       )}
 
       {/* 수정 모달 */}
@@ -643,6 +646,54 @@ function App() {
         </div>
       )}
     </div>
+  );
+}
+
+// Main App component with Router and Auth context
+function App() {
+  const [authView, setAuthView] = useState('login'); // 'login', 'register', 'forgot-password'
+
+  const handleLoginSuccess = (userData) => {
+    console.log('로그인 성공:', userData);
+    // 로그인 성공 후 메인 페이지로 리다이렉트
+    window.location.href = '/';
+  };
+
+  const handleRegisterSuccess = (view = 'login') => {
+    setAuthView(view);
+  };
+
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={
+            authView === 'login' ? (
+              <Login 
+                onLogin={handleLoginSuccess} 
+                onForgotPassword={() => setAuthView('forgot-password')}
+                onRegister={() => setAuthView('register')}
+              />
+            ) : authView === 'register' ? (
+              <Register onRegisterSuccess={handleRegisterSuccess} />
+            ) : (
+              <ForgotPassword 
+                onSuccess={() => setAuthView('login')}
+                onBackToLogin={() => setAuthView('login')}
+              />
+            )
+          } />
+          <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+          <Route path="/reset-password" element={<ResetPassword onSuccess={() => window.location.href = '/login'} />} />
+          <Route path="/" element={
+            <PrivateRoute>
+              <CalendarApp />
+            </PrivateRoute>
+          } />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
