@@ -505,162 +505,173 @@ function CalendarApp() {
       {/* 수동 추가 모달 */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 space-y-6">
-            <h3 className="text-2xl font-semibold">일정 추가</h3>
-            <form onSubmit={handleManualSubmit} className="space-y-4">
-              {/* 날짜 */}
-              <div>
-                <label className="block text-gray-700 mb-1">날짜</label>
-                <input
-                  type="date"
-                  name="date"
-                  value={manualEvent.date}
-                  onChange={handleManualChange}
-                  required
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              
-              {/* 하루종일 체크박스 */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="isAllDay"
-                  name="isAllDay"
-                  checked={manualEvent.isAllDay}
-                  onChange={handleManualChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isAllDay" className="ml-2 block text-sm text-gray-700">
-                  하루종일
-                </label>
-              </div>
-              
-              {/* 시간 - 하루종일이 아닐 때만 표시 */}
-              {!manualEvent.isAllDay && (
-                <div className="flex space-x-4">
-                  <div className="flex-1">
-                    <label className="block text-gray-700 mb-1">시작 시간</label>
-                    <input
-                      type="time"
-                      name="startTime"
-                      value={manualEvent.startTime}
-                      onChange={handleManualChange}
-                      required
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-8 py-4 flex justify-between items-center border-b border-gray-100">
+              <h3 className="text-2xl font-semibold text-gray-800">일정 추가</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-700 text-xl transition-colors"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              <form onSubmit={handleManualSubmit} className="space-y-4">
+                {/* 날짜 */}
+                <div>
+                  <label className="block text-gray-700 mb-1">날짜</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={manualEvent.date}
+                    onChange={handleManualChange}
+                    required
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                
+                {/* 하루종일 체크박스 */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isAllDay"
+                    name="isAllDay"
+                    checked={manualEvent.isAllDay}
+                    onChange={handleManualChange}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="isAllDay" className="ml-2 block text-sm text-gray-700">
+                    하루종일
+                  </label>
+                </div>
+                
+                {/* 시간 - 하루종일이 아닐 때만 표시 */}
+                {!manualEvent.isAllDay && (
+                  <div className="flex space-x-4">
+                    <div className="flex-1">
+                      <label className="block text-gray-700 mb-1">시작 시간</label>
+                      <input
+                        type="time"
+                        name="startTime"
+                        value={manualEvent.startTime}
+                        onChange={handleManualChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-gray-700 mb-1">종료 시간</label>
+                      <input
+                        type="time"
+                        name="endTime"
+                        value={manualEvent.endTime}
+                        onChange={handleManualChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-gray-700 mb-1">종료 시간</label>
-                    <input
-                      type="time"
-                      name="endTime"
-                      value={manualEvent.endTime}
-                      onChange={handleManualChange}
-                      required
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                )}
+                {/* 제목 */}
+                <div>
+                  <label className="block text-gray-700 mb-1">제목</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={manualEvent.title}
+                    onChange={handleManualChange}
+                    required
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                {/* 메모 */}
+                <div>
+                  <label className="block text-gray-700 mb-1">메모</label>
+                  <input
+                    type="text"
+                    name="memo"
+                    value={manualEvent.memo}
+                    onChange={handleManualChange}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                {/* 색상 선택 */}
+                <div>
+                  <label className="block text-gray-700 mb-1">색상 선택</label>
+                  <div className="flex space-x-2">
+                    {pastelColors.map(color => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setManualEvent(prev => ({ ...prev, color }))}
+                        className={`w-8 h-8 rounded-full border-2 ${
+                          manualEvent.color === color ? 'border-gray-800' : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
                   </div>
                 </div>
-              )}
-              {/* 제목 */}
-              <div>
-                <label className="block text-gray-700 mb-1">제목</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={manualEvent.title}
-                  onChange={handleManualChange}
-                  required
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              {/* 메모 */}
-              <div>
-                <label className="block text-gray-700 mb-1">메모</label>
-                <input
-                  type="text"
-                  name="memo"
-                  value={manualEvent.memo}
-                  onChange={handleManualChange}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              {/* 색상 선택 */}
-              <div>
-                <label className="block text-gray-700 mb-1">색상 선택</label>
-                <div className="flex space-x-2">
-                  {pastelColors.map(color => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setManualEvent(prev => ({ ...prev, color }))}
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        manualEvent.color === color ? 'border-gray-800' : 'border-transparent'
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
+                {/* 분류 */}
+                <div>
+                  <label className="block text-gray-700 mb-1">분류</label>
+                  <select
+                    name="categoryCode"
+                    value={manualEvent.categoryCode}
+                    onChange={handleManualChange}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {CATEGORY_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-              {/* 분류 */}
-              <div>
-                <label className="block text-gray-700 mb-1">분류</label>
-                <select
-                  name="categoryCode"
-                  value={manualEvent.categoryCode}
-                  onChange={handleManualChange}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {CATEGORY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              {/* 우선순위 */}
-              <div>
-                <label className="block text-gray-700 mb-1">우선순위</label>
-                <select
-                  name="priority"
-                  value={manualEvent.priority}
-                  onChange={handleManualChange}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {PRIORITY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              {/* 유형 */}
-              <div>
-                <label className="block text-gray-700 mb-1">유형</label>
-                <select
-                  name="type"
-                  value={manualEvent.type}
-                  onChange={handleManualChange}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {TYPE_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-5 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
-                >
-                  추가
-                </button>
-              </div>
-            </form>
+                {/* 우선순위 */}
+                <div>
+                  <label className="block text-gray-700 mb-1">우선순위</label>
+                  <select
+                    name="priority"
+                    value={manualEvent.priority}
+                    onChange={handleManualChange}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {PRIORITY_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* 유형 */}
+                <div>
+                  <label className="block text-gray-700 mb-1">유형</label>
+                  <select
+                    name="type"
+                    value={manualEvent.type}
+                    onChange={handleManualChange}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {TYPE_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="px-5 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
+                  >
+                    추가
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -764,8 +775,11 @@ function CalendarApp() {
       {/* 일정 확인 모달 */}
       {showEventModal && selectedEvent && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 space-y-6 border border-gray-100 animate-fadeIn">
-            <div className="flex justify-between items-center">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            {/* 색상이 적용된 헤더 */}
+            <div 
+              className="px-8 py-4 flex justify-between items-center border-b border-gray-100"
+            >
               <h3 className="text-2xl font-semibold text-gray-800">일정 정보</h3>
               <button
                 onClick={() => setShowEventModal(false)}
@@ -775,131 +789,128 @@ function CalendarApp() {
               </button>
             </div>
             
-            <div 
-              className="absolute top-0 left-0 h-2 w-full rounded-t-xl"
-              style={{ backgroundColor: selectedEvent.color }}
-            ></div>
-            
-            <div className="space-y-4 mt-2">
-              <div>
-                <div className="text-sm text-gray-500">제목</div>
-                <div className="text-lg font-medium">{selectedEvent.title}</div>
-              </div>
-              
-              <div className="flex space-x-4">
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500">날짜</div>
-                  <div className="flex items-center gap-1 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    {selectedEvent.date}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex space-x-4">
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500">시작 시간</div>
-                  <div className="flex items-center gap-1 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {selectedEvent.startTime}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500">종료 시간</div>
-                  <div className="flex items-center gap-1 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {selectedEvent.endTime}
-                  </div>
-                </div>
-              </div>
-              
-              {selectedEvent.memo && (
+            <div className="p-8 space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <div className="text-sm text-gray-500">메모</div>
-                  <div className="p-2 bg-gray-50 rounded-md text-gray-700 mt-1">{selectedEvent.memo}</div>
+                  <div className="text-sm text-gray-500">제목</div>
+                  <div className="text-lg font-medium">{selectedEvent.title}</div>
                 </div>
-              )}
-              
-              <div className="flex space-x-4">
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500">분류</div>
-                  <div className="flex items-center gap-1 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    {CATEGORY_OPTIONS.find(opt => opt.value === selectedEvent.categoryCode)?.label || selectedEvent.categoryCode}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500">우선순위</div>
-                  <div className="flex items-center gap-1 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                    {selectedEvent.priority}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500">유형</div>
-                  <div className="flex items-center gap-1 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    {TYPE_OPTIONS.find(opt => opt.value === selectedEvent.type)?.label || selectedEvent.type}
+                
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-500">날짜</div>
+                    <div className="flex items-center gap-1 text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {selectedEvent.date}
+                    </div>
                   </div>
                 </div>
                 
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-500">시작 시간</div>
+                    <div className="flex items-center gap-1 text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {selectedEvent.startTime}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-500">종료 시간</div>
+                    <div className="flex items-center gap-1 text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {selectedEvent.endTime}
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedEvent.memo && (
+                  <div>
+                    <div className="text-sm text-gray-500">메모</div>
+                    <div className="p-2 bg-gray-50 rounded-md text-gray-700 mt-1">{selectedEvent.memo}</div>
+                  </div>
+                )}
+                
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-500">분류</div>
+                    <div className="flex items-center gap-1 text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      {CATEGORY_OPTIONS.find(opt => opt.value === selectedEvent.categoryCode)?.label || selectedEvent.categoryCode}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-500">우선순위</div>
+                    <div className="flex items-center gap-1 text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                      {selectedEvent.priority}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-gray-500">유형</div>
+                    <div className="flex items-center gap-1 text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      {TYPE_OPTIONS.find(opt => opt.value === selectedEvent.type)?.label || selectedEvent.type}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-sm text-gray-500">색상</div>
+                    <div className="flex items-center mt-1">
+                      <div
+                        className="w-6 h-6 rounded-full mr-2 shadow-sm"
+                        style={{ backgroundColor: selectedEvent.color }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* 하루종일 여부 */}
                 <div>
-                  <div className="text-sm text-gray-500">색상</div>
-                  <div className="flex items-center mt-1">
-                    <div
-                      className="w-6 h-6 rounded-full mr-2 shadow-sm"
-                      style={{ backgroundColor: selectedEvent.color }}
-                    ></div>
+                  <div className="text-sm text-gray-500">일정 유형</div>
+                  <div className="flex items-center gap-1 text-gray-700 mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {selectedEvent.isAllDay ? '하루종일' : '시간 지정'}
                   </div>
                 </div>
               </div>
               
-              {/* 하루종일 여부 */}
-              <div>
-                <div className="text-sm text-gray-500">일정 유형</div>
-                <div className="flex items-center gap-1 text-gray-700 mt-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-100">
+                <button
+                  onClick={handleDeleteEvent}
+                  className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  {selectedEvent.isAllDay ? '하루종일' : '시간 지정'}
-                </div>
+                  삭제
+                </button>
+                <button
+                  onClick={handleEditClick}
+                  className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  수정
+                </button>
               </div>
-            </div>
-            
-            <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-100">
-              <button
-                onClick={handleDeleteEvent}
-                className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                삭제
-              </button>
-              <button
-                onClick={handleEditClick}
-                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                수정
-              </button>
             </div>
           </div>
         </div>
@@ -908,8 +919,8 @@ function CalendarApp() {
       {/* 수정 모달 */}
       {editMode && editEvent && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 space-y-6 border border-gray-100 animate-fadeIn">
-            <div className="flex justify-between items-center">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-8 py-4 flex justify-between items-center border-b border-gray-100">
               <h3 className="text-2xl font-semibold text-gray-800">일정 수정</h3>
               <button
                 onClick={() => setEditMode(false)}
@@ -919,163 +930,160 @@ function CalendarApp() {
               </button>
             </div>
             
-            <div 
-              className="absolute top-0 left-0 h-2 w-full rounded-t-xl"
-              style={{ backgroundColor: editEvent.color }}
-            ></div>
-            
-            <form onSubmit={handleEditSubmit} className="space-y-5 mt-2">
-              {/* 날짜 */}
-              <div>
-                <label className="block text-gray-700 mb-1 text-sm font-medium">날짜</label>
-                <input
-                  type="date"
-                  name="date"
-                  value={editEvent.date}
-                  onChange={handleEditChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                />
-              </div>
-              
-              {/* 하루종일 체크박스 */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="editIsAllDay"
-                  name="isAllDay"
-                  checked={editEvent.isAllDay}
-                  onChange={handleEditChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="editIsAllDay" className="ml-2 block text-sm text-gray-700">
-                  하루종일
-                </label>
-              </div>
-              
-              {/* 시간 - 하루종일이 아닐 때만 표시 */}
-              {!editEvent.isAllDay && (
-                <div className="flex space-x-4">
-                  <div className="flex-1">
-                    <label className="block text-gray-700 mb-1 text-sm font-medium">시작 시간</label>
-                    <input
-                      type="time"
-                      name="startTime"
-                      value={editEvent.startTime}
-                      onChange={handleEditChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                    />
+            <div className="p-8 space-y-6">
+              <form onSubmit={handleEditSubmit} className="space-y-5">
+                {/* 날짜 */}
+                <div>
+                  <label className="block text-gray-700 mb-1 text-sm font-medium">날짜</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={editEvent.date}
+                    onChange={handleEditChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                  />
+                </div>
+                
+                {/* 하루종일 체크박스 */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="editIsAllDay"
+                    name="isAllDay"
+                    checked={editEvent.isAllDay}
+                    onChange={handleEditChange}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="editIsAllDay" className="ml-2 block text-sm text-gray-700">
+                    하루종일
+                  </label>
+                </div>
+                
+                {/* 시간 - 하루종일이 아닐 때만 표시 */}
+                {!editEvent.isAllDay && (
+                  <div className="flex space-x-4">
+                    <div className="flex-1">
+                      <label className="block text-gray-700 mb-1 text-sm font-medium">시작 시간</label>
+                      <input
+                        type="time"
+                        name="startTime"
+                        value={editEvent.startTime}
+                        onChange={handleEditChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-gray-700 mb-1 text-sm font-medium">종료 시간</label>
+                      <input
+                        type="time"
+                        name="endTime"
+                        value={editEvent.endTime}
+                        onChange={handleEditChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-gray-700 mb-1 text-sm font-medium">종료 시간</label>
-                    <input
-                      type="time"
-                      name="endTime"
-                      value={editEvent.endTime}
-                      onChange={handleEditChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                    />
+                )}
+                {/* 제목 */}
+                <div>
+                  <label className="block text-gray-700 mb-1 text-sm font-medium">제목</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={editEvent.title}
+                    onChange={handleEditChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                  />
+                </div>
+                {/* 메모 */}
+                <div>
+                  <label className="block text-gray-700 mb-1 text-sm font-medium">메모</label>
+                  <textarea
+                    name="memo"
+                    value={editEvent.memo}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                    rows="2"
+                  />
+                </div>
+                {/* 색상 선택 */}
+                <div>
+                  <label className="block text-gray-700 mb-2 text-sm font-medium">색상 선택</label>
+                  <div className="flex flex-wrap gap-2">
+                    {pastelColors.map(color => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setEditEvent(prev => ({ ...prev, color }))}
+                        className={`w-8 h-8 rounded-full border-2 ${editEvent.color === color ? 'border-gray-800 scale-110' : 'border-transparent'} transition-transform hover:scale-110`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
                   </div>
                 </div>
-              )}
-              {/* 제목 */}
-              <div>
-                <label className="block text-gray-700 mb-1 text-sm font-medium">제목</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={editEvent.title}
-                  onChange={handleEditChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                />
-              </div>
-              {/* 메모 */}
-              <div>
-                <label className="block text-gray-700 mb-1 text-sm font-medium">메모</label>
-                <textarea
-                  name="memo"
-                  value={editEvent.memo}
-                  onChange={handleEditChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                  rows="2"
-                />
-              </div>
-              {/* 색상 선택 */}
-              <div>
-                <label className="block text-gray-700 mb-2 text-sm font-medium">색상 선택</label>
-                <div className="flex flex-wrap gap-2">
-                  {pastelColors.map(color => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setEditEvent(prev => ({ ...prev, color }))}
-                      className={`w-8 h-8 rounded-full border-2 ${editEvent.color === color ? 'border-gray-800 scale-110' : 'border-transparent'} transition-transform hover:scale-110`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
+                {/* 분류 */}
+                <div>
+                  <label className="block text-gray-700 mb-1 text-sm font-medium">분류</label>
+                  <select
+                    name="categoryCode"
+                    value={editEvent.categoryCode}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                  >
+                    {CATEGORY_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-              {/* 분류 */}
-              <div>
-                <label className="block text-gray-700 mb-1 text-sm font-medium">분류</label>
-                <select
-                  name="categoryCode"
-                  value={editEvent.categoryCode}
-                  onChange={handleEditChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                >
-                  {CATEGORY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              {/* 우선순위 */}
-              <div>
-                <label className="block text-gray-700 mb-1 text-sm font-medium">우선순위</label>
-                <select
-                  name="priority"
-                  value={editEvent.priority}
-                  onChange={handleEditChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                >
-                  {PRIORITY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              {/* 유형 */}
-              <div>
-                <label className="block text-gray-700 mb-1 text-sm font-medium">유형</label>
-                <select
-                  name="type"
-                  value={editEvent.type}
-                  onChange={handleEditChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                >
-                  {TYPE_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setEditMode(false)}
-                  className="px-5 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                >
-                  저장
-                </button>
-              </div>
-            </form>
+                {/* 우선순위 */}
+                <div>
+                  <label className="block text-gray-700 mb-1 text-sm font-medium">우선순위</label>
+                  <select
+                    name="priority"
+                    value={editEvent.priority}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                  >
+                    {PRIORITY_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* 유형 */}
+                <div>
+                  <label className="block text-gray-700 mb-1 text-sm font-medium">유형</label>
+                  <select
+                    name="type"
+                    value={editEvent.type}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                  >
+                    {TYPE_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setEditMode(false)}
+                    className="px-5 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                  >
+                    저장
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
