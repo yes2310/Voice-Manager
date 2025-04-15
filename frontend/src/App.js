@@ -299,7 +299,7 @@ function CalendarApp() {
     setError(null);
     
     try {
-      await api.deleteAccount();
+      await api.auth.deleteAccount();
       logout();
       // 로그아웃 후 로그인 페이지로 리디렉션
       window.location.href = '/login';
