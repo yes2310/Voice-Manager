@@ -87,14 +87,16 @@ router.post('/login', async (req, res) => {
 });
 
 // 회원탈퇴
-router.delete('/account', auth, async (req, res) => {
+router.delete('/delete', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
+    console.log(`[회원탈퇴] 삭제 요청 - 사용자 ID: ${userId}`);
     
     // 사용자 삭제
     const deleteResult = await User.findByIdAndDelete(userId);
     
     if (!deleteResult) {
+      console.log(`[회원탈퇴] 실패 - 사용자를 찾을 수 없음: ${userId}`);
       return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
     }
     
@@ -102,10 +104,38 @@ router.delete('/account', auth, async (req, res) => {
     const Schedule = require('../models/Schedule');
     await Schedule.deleteMany({ userId });
     
+    console.log(`[회원탈퇴] 성공 - 사용자 ID: ${userId}`);
     res.json({ message: '계정이 성공적으로 삭제되었습니다.' });
     
   } catch (error) {
-    console.error('회원탈퇴 에러:', error);
+    console.error('[회원탈퇴] 오류:', error);
+    res.status(500).json({ error: '계정 삭제 중 오류가 발생했습니다.' });
+  }
+});
+
+// 회원탈퇴 - 두 번째 엔드포인트 (호환성을 위해)
+router.delete('/delete-account', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    console.log(`[회원탈퇴] 삭제 요청(/delete-account) - 사용자 ID: ${userId}`);
+    
+    // 사용자 삭제
+    const deleteResult = await User.findByIdAndDelete(userId);
+    
+    if (!deleteResult) {
+      console.log(`[회원탈퇴] 실패 - 사용자를 찾을 수 없음: ${userId}`);
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+    
+    // 사용자의 모든 일정 삭제
+    const Schedule = require('../models/Schedule');
+    await Schedule.deleteMany({ userId });
+    
+    console.log(`[회원탈퇴] 성공 - 사용자 ID: ${userId}`);
+    res.json({ message: '계정이 성공적으로 삭제되었습니다.' });
+    
+  } catch (error) {
+    console.error('[회원탈퇴] 오류:', error);
     res.status(500).json({ error: '계정 삭제 중 오류가 발생했습니다.' });
   }
 });

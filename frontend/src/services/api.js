@@ -65,11 +65,28 @@ const api = {
     
     // 회원 탈퇴
     deleteAccount: async () => {
-      const response = await fetch(`${API_URL}/auth/account`, {
-        method: 'DELETE',
-        headers: authHeader(),
-      });
-      return handleResponse(response);
+      const token = getToken();
+      console.log('토큰 확인:', token ? 'Token exists' : 'No token');
+      
+      try {
+        const response = await fetch(`${API_URL}/auth/delete`, {
+          method: 'DELETE',
+          headers: {
+            ...authHeader(),
+            'Content-Type': 'application/json'
+          },
+        });
+        
+        if (!response.ok) {
+          console.error('Delete account error status:', response.status);
+          console.error('Delete account error statusText:', response.statusText);
+        }
+        
+        return handleResponse(response);
+      } catch (error) {
+        console.error('Delete account error:', error);
+        throw error;
+      }
     },
   },
   
