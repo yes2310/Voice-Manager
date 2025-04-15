@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
@@ -61,6 +61,10 @@ function CalendarApp() {
   const [recording, setRecording] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [manualEvent, setManualEvent] = useState({
     date: '', startTime: '', endTime: '',
     title: '', memo: '', color: pastelColors[0],
@@ -284,44 +288,109 @@ function CalendarApp() {
   const minTime = new Date(); minTime.setHours(0, 0, 0);
   const maxTime = new Date(); maxTime.setHours(23, 59, 59);
 
+  // Account deletion handler
+  const handleDeleteAccount = async () => {
+    if (confirmText !== '계정삭제') {
+      setError('확인 텍스트가 일치하지 않습니다.');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await api.deleteAccount();
+      logout();
+      // 로그아웃 후 로그인 페이지로 리디렉션
+      window.location.href = '/login';
+    } catch (error) {
+      setError('계정 삭제 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <header className="max-w-5xl mx-auto mb-6 flex justify-between items-center">
         <h1 className="text-4xl font-extrabold text-gray-800">Voice Manager</h1>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 relative">
           <button
-            onClick={() => setShowProfileModal(true)}
-            className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-md hover:bg-indigo-200 transition"
+            onClick={() => setShowProfileModal(!showProfileModal)}
+            className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center hover:bg-indigo-200 transition overflow-hidden border-2 border-indigo-300"
           >
-            {currentUser?.name || currentUser?.email}
+            {currentUser?.name?.charAt(0) || currentUser?.email?.charAt(0) || 'U'}
           </button>
+          
+          {/* 프로필 드롭다운 메뉴 */}
+          {showProfileModal && (
+            <div className="absolute top-12 right-0 bg-white rounded-xl shadow-xl w-72 z-50">
+              <div className="p-4 border-b border-gray-200">
+                <p className="font-medium text-gray-800">{currentUser?.name}</p>
+                <p className="text-sm text-gray-600">{currentUser?.email}</p>
+              </div>
+              <div className="p-2">
+                <button
+                  onClick={() => {
+                    setShowProfileModal(false);
+                    logout();
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
+                >
+                  로그아웃
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProfileModal(false);
+                    // 계정 관리 모달 표시
+                    document.body.style.overflow = 'hidden';
+                    document.getElementById('fullProfileModal').classList.remove('hidden');
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
+                >
+                  계정 관리
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto space-y-8">
         {/* 음성 버튼 */}
-        <div className="flex justify-center space-x-4">
-          {!recording ? (
-            <button
-              onClick={startRecognition}
-              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+        <div className="flex justify-center">
+          <button
+            onClick={recording ? stopRecognition : startRecognition}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${
+              recording 
+                ? "bg-red-600 text-white ring-4 ring-red-300 animate-pulse" 
+                : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
+            }`}
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className={`h-5 w-5 ${recording ? "animate-bounce" : ""}`}
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
             >
-              음성 인식 시작
-            </button>
-          ) : (
-            <button
-              onClick={stopRecognition}
-              className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
-            >
-              음성 인식 중지
-            </button>
-          )}
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" 
+              />
+            </svg>
+            <span>{recording ? "음성 인식 중지" : "음성 인식 시작"}</span>
+          </button>
         </div>
 
         {/* 실시간 인식 텍스트 박스: recording 중이거나 transcript 있을 때만 */}
         {(recording || transcript) && (
-          <div className="max-w-5xl mx-auto bg-gray-200 rounded-md p-4 text-gray-800 mb-6 min-h-[3rem]">
-            {transcript || '음성을 인식 중입니다...'}
+          <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-4 text-gray-800 mb-6 min-h-[3rem] relative border-l-4 border-blue-500 transition-all duration-500">
+            <div className={`absolute top-0 left-0 h-full max-w-full bg-blue-100 rounded-l-lg transition-all duration-500 ${recording ? "animate-pulse" : ""}`} style={{width: recording ? '30%' : '0%'}}></div>
+            <p className="relative z-10">
+              {transcript || '음성을 인식 중입니다...'}
+            </p>
           </div>
         )}
 
@@ -498,10 +567,101 @@ function CalendarApp() {
         </div>
       )}
 
-      {/* 프로필 모달 */}
-      {showProfileModal && (
-        <Profile onClose={() => setShowProfileModal(false)} />
-      )}
+      {/* 전체 프로필 모달 (계정 관리) */}
+      <div id="fullProfileModal" className="fixed inset-0 flex items-center justify-center bg-black/30 hidden">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-800">내 계정</h2>
+            <button
+              onClick={() => {
+                document.body.style.overflow = '';
+                document.getElementById('fullProfileModal').classList.add('hidden');
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              &times;
+            </button>
+          </div>
+          
+          <div className="mb-8">
+            <div className="text-gray-600 mb-1">이름</div>
+            <div className="text-xl font-medium">{currentUser?.name}</div>
+          </div>
+          
+          <div className="mb-8">
+            <div className="text-gray-600 mb-1">이메일</div>
+            <div className="text-xl font-medium">{currentUser?.email}</div>
+          </div>
+          
+          <hr className="my-6 border-gray-200" />
+          
+          <div className="mb-6">
+            <button
+              onClick={() => {
+                setIsDeleting(true);
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+            >
+              계정 삭제
+            </button>
+          </div>
+          
+          {isDeleting && (
+            <div className="border border-red-300 rounded-md p-4 bg-red-50">
+              <h3 className="text-lg font-medium text-red-800 mb-2">계정 삭제 확인</h3>
+              <p className="text-red-700 mb-4">
+                계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+              </p>
+              
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                  {error}
+                </div>
+              )}
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-1">확인을 위해 "계정삭제"를 입력하세요</label>
+                <input
+                  type="text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setIsDeleting(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={confirmText !== '계정삭제' || isLoading}
+                  className={`px-4 py-2 ${
+                    confirmText !== '계정삭제' || isLoading
+                      ? 'bg-red-400'
+                      : 'bg-red-600 hover:bg-red-700'
+                  } text-white rounded-md transition`}
+                >
+                  {isLoading ? '처리 중...' : '계정 영구 삭제'}
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <button
+            onClick={() => {
+              document.body.style.overflow = '';
+              document.getElementById('fullProfileModal').classList.add('hidden');
+            }}
+            className="w-full py-3 mt-6 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition"
+          >
+            닫기
+          </button>
+        </div>
+      </div>
 
       {/* 수정 모달 */}
       {editMode && editEvent && (
