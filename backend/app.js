@@ -2,12 +2,10 @@
 
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
-const PORT = 3000;
 
 // 1) CORS
 app.use(cors({
@@ -43,24 +41,13 @@ app.use('/api/auth', (req, res, next) => {
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/auth', authRoutes);
 
-// 6) DB 연결
-mongoose.connect('mongodb://yes2310.duckdns.org:27017/scheduleApp', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => console.log('✅ MongoDB 연결 성공'))
-  .catch(err => console.error('❌ MongoDB 연결 실패:', err));
-
-// 7) 기본 라우트
+// 6) 기본 라우트 (DB 연결 및 서버 실행 로직 제거 후)
 app.get('/', (req, res) => res.send('🎉 서버 정상 작동 중!'));
 
-// 8) 에러 핸들링 미들웨어
+// 7) 에러 핸들링 미들웨어 (DB 연결 및 서버 실행 로직 제거 후)
 app.use((err, req, res, next) => {
   console.error('❌ 서버 에러:', err.stack);
   res.status(500).json({ error: '서버 내부 오류가 발생했습니다.' });
 });
 
-// 9) 서버 실행
-app.listen(PORT, () => {
-  console.log(`🚀 서버 실행 중: http://localhost:${PORT}`);
-});
+module.exports = app; // 앱 모듈 내보내기

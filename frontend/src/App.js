@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
@@ -16,7 +16,6 @@ import Login from './components/Login';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
-import Profile from './components/Profile';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import api from './services/api';
@@ -54,7 +53,7 @@ const TYPE_OPTIONS = [
 
 // Calendar component separated for use with PrivateRoute
 function CalendarApp() {
-  const { currentUser, token, logout } = useAuth();
+  const { currentUser, logout } = useAuth();
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState('week');
@@ -79,6 +78,7 @@ function CalendarApp() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const recognitionRef = useRef(null);
+  const [modalMsg, setModalMsg] = useState('');
 
   // Load schedules
   useEffect(() => {
@@ -377,6 +377,39 @@ function CalendarApp() {
       window.location.href = '/login';
     } catch (error) {
       setError('계정 삭제 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      setIsLoading(false);
+    }
+  };
+
+  // 음성 인식 일정 자동 등록
+  const handleVoiceInputSchedule = async (text) => {
+    try {
+      setIsLoading(true);
+      await api.schedules.voiceInput(text);
+      // 일정 등록 성공 시 일정 목록 새로고침
+      const data = await api.schedules.getAll();
+      setEvents(data.map(item => ({
+        id: item._id,
+        _id: item._id,
+        title: item.title,
+        start: dayjs.utc(item.startTime).local().toDate(),
+        end: dayjs.utc(item.endTime).local().toDate(),
+        memo: item.description,
+        color: item.color || pastelColors[0],
+        categoryCode: item.categoryCode,
+        priority: item.priority,
+        type: item.type,
+        isAllDay: item.isAllDay || false,
+      })));
+    } catch (err) {
+      if (err.message === '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.') {
+        setModalMsg(err.message);
+        setShowModal(true);
+      } else {
+        setModalMsg('일정 등록 중 오류가 발생했습니다.');
+        setShowModal(true);
+      }
+    } finally {
       setIsLoading(false);
     }
   };

@@ -132,6 +132,18 @@ const api = {
       });
       return handleResponse(response);
     },
+
+    voiceInput: async (text) => {
+      const response = await fetch(`${API_URL}/schedules/voice-input`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeader(),
+        },
+        body: JSON.stringify({ text }),
+      });
+      return handleResponse(response);
+    },
   },
 };
 

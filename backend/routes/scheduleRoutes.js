@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Schedule = require('../models/Schedule');
 const auth = require('../middleware/auth');
+const openaiService = require('../services/openaiService');
 
 // 인증 미들웨어를 모든 라우트에 적용
 router.use(auth);
@@ -86,6 +87,27 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: '일정 삭제 완료' });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// ✅ POST: 음성 인식 텍스트로 일정 자동 등록
+router.post('/voice-input', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ error: '음성 인식 텍스트가 필요합니다.' });
+    }
+    const result = await openaiService.classifyAndExtractSchedule(text);
+    if (!result.time || !result.title || !result.category) {
+      return res.status(400).json({ error: '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.' });
+    }
+    const userId = req.user.userId;
+    const scheduleData = { ...result, userId };
+    const schedule = new Schedule(scheduleData);
+    await schedule.save();
+    res.status(201).json({ message: '일정 자동 등록 완료', schedule });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
