@@ -97,16 +97,34 @@ router.post('/voice-input', async (req, res) => {
     if (!text) {
       return res.status(400).json({ error: '음성 인식 텍스트가 필요합니다.' });
     }
+
     const result = await openaiService.classifyAndExtractSchedule(text);
-    if (!result.time || !result.title || !result.category) {
-      return res.status(400).json({ error: '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.' });
+    if (!result.title || !result.category) {
+      return res.status(400).json({ error: '일정 제목과 카테고리를 모두 말씀해 주세요.' });
     }
+
     const userId = req.user.userId;
-    const scheduleData = { ...result, userId };
+    const scheduleData = {
+      title: result.title,
+      categoryCode: result.category,
+      startTime: result.startTime,
+      endTime: result.endTime,
+      userId,
+      type: 'general',
+      priority: '보통',
+      color: '#BAE1FF',
+      isAllDay: false
+    };
+
     const schedule = new Schedule(scheduleData);
     await schedule.save();
-    res.status(201).json({ message: '일정 자동 등록 완료', schedule });
+    
+    res.status(201).json({ 
+      message: '일정 자동 등록 완료', 
+      schedule 
+    });
   } catch (err) {
+    console.error('음성 인식 처리 중 오류:', err);
     res.status(500).json({ error: err.message });
   }
 });

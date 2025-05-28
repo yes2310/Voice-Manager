@@ -79,6 +79,12 @@ function CalendarApp() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const recognitionRef = useRef(null);
   const [modalMsg, setModalMsg] = useState('');
+  const [showVoiceResultModal, setShowVoiceResultModal] = useState(false);
+  const [voiceAnalysis, setVoiceAnalysis] = useState({
+    time: '',
+    summary: '',
+    category: ''
+  });
 
   // Load schedules
   useEffect(() => {
@@ -157,6 +163,7 @@ function CalendarApp() {
     rec.maxAlternatives = 1;
 
     rec.onstart = () => {
+      console.log('음성 인식 시작됨');
       setRecording(true);
       setTranscript('');
     };
@@ -165,11 +172,84 @@ function CalendarApp() {
       const text = Array.from(event.results)
         .map(r => r[0].transcript)
         .join('');
+      console.log('음성 인식 중:', text);
       setTranscript(text);
     };
 
-    rec.onerror = err => console.error('음성 인식 에러:', err);
-    rec.onend = () => setRecording(false);
+    rec.onerror = err => {
+      console.error('음성 인식 에러:', err);
+      setModalMsg('음성 인식 중 오류가 발생했습니다.');
+      setShowModal(true);
+    };
+
+    rec.onend = async () => {
+      console.log('음성 인식 종료됨');
+      console.log('최종 인식 텍스트:', transcript);
+      setRecording(false);
+      
+      if (transcript) {
+        try {
+          console.log('서버로 전송 시작');
+          const result = await api.schedules.voiceInput(transcript);
+          console.log('서버 응답:', result);
+          
+          if (result && result.schedule) {
+            console.log('일정 정보 추출 성공');
+            const schedule = result.schedule;
+            
+            // 시간 정보
+            const startTime = new Date(schedule.startTime);
+            const endTime = new Date(schedule.endTime);
+            const timeStr = `${startTime.toLocaleString('ko-KR')} ~ ${endTime.toLocaleString('ko-KR')}`;
+            
+            // 카테고리
+            const categoryLabel = CATEGORY_OPTIONS.find(opt => opt.value === schedule.categoryCode)?.label || schedule.categoryCode;
+            
+            console.log('분석된 정보:', {
+              time: timeStr,
+              title: schedule.title,
+              category: categoryLabel
+            });
+            
+            // 상태 업데이트
+            setVoiceAnalysis({
+              time: timeStr,
+              summary: schedule.title,
+              category: categoryLabel
+            });
+            
+            console.log('모달 표시');
+            setShowVoiceResultModal(true);
+            
+            // 일정 목록 새로고침
+            const data = await api.schedules.getAll();
+            console.log('일정 목록 새로고침 완료:', data.length);
+            
+            setEvents(data.map(item => ({
+              id: item._id,
+              _id: item._id,
+              title: item.title,
+              start: dayjs.utc(item.startTime).local().toDate(),
+              end: dayjs.utc(item.endTime).local().toDate(),
+              memo: item.description,
+              color: item.color || pastelColors[0],
+              categoryCode: item.categoryCode,
+              priority: item.priority,
+              type: item.type,
+              isAllDay: item.isAllDay || false,
+            })));
+          } else {
+            console.log('일정 정보 없음');
+            setModalMsg('일정 정보를 가져오는데 실패했습니다.');
+            setShowModal(true);
+          }
+        } catch (err) {
+          console.error('처리 중 오류:', err);
+          setModalMsg(err.message || '일정 등록 중 오류가 발생했습니다.');
+          setShowModal(true);
+        }
+      }
+    };
 
     recognitionRef.current = rec;
     rec.start();
@@ -1116,6 +1196,59 @@ function CalendarApp() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 음성 인식 결과 모달 */}
+      {showVoiceResultModal && voiceAnalysis && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800">음성 인식 분석 결과</h3>
+              <button
+                onClick={() => {
+                  setShowVoiceResultModal(false);
+                  setVoiceAnalysis({ time: '', summary: '', category: '' });
+                  setTranscript('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">시간</p>
+                <p className="font-medium text-gray-800">{voiceAnalysis.time}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-gray-600 mb-1">일정 요약</p>
+                <p className="font-medium text-gray-800">{voiceAnalysis.summary}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-gray-600 mb-1">카테고리</p>
+                <p className="font-medium text-gray-800">{voiceAnalysis.category}</p>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowVoiceResultModal(false);
+                  setVoiceAnalysis({ time: '', summary: '', category: '' });
+                  setTranscript('');
+                }}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition"
+              >
+                닫기
+              </button>
             </div>
           </div>
         </div>
