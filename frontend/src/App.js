@@ -78,7 +78,6 @@ function CalendarApp() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const recognitionRef = useRef(null);
-  const [modalMsg, setModalMsg] = useState('');
   const [showVoiceResultModal, setShowVoiceResultModal] = useState(false);
   const [voiceAnalysis, setVoiceAnalysis] = useState({
     time: '',
@@ -178,7 +177,7 @@ function CalendarApp() {
 
     rec.onerror = err => {
       console.error('음성 인식 에러:', err);
-      setModalMsg('음성 인식 중 오류가 발생했습니다.');
+      setError('음성 인식 중 오류가 발생했습니다.');
       setShowModal(true);
     };
 
@@ -190,62 +189,10 @@ function CalendarApp() {
       if (transcript) {
         try {
           console.log('서버로 전송 시작');
-          const result = await api.schedules.voiceInput(transcript);
-          console.log('서버 응답:', result);
-          
-          if (result && result.schedule) {
-            console.log('일정 정보 추출 성공');
-            const schedule = result.schedule;
-            
-            // 시간 정보
-            const startTime = new Date(schedule.startTime);
-            const endTime = new Date(schedule.endTime);
-            const timeStr = `${startTime.toLocaleString('ko-KR')} ~ ${endTime.toLocaleString('ko-KR')}`;
-            
-            // 카테고리
-            const categoryLabel = CATEGORY_OPTIONS.find(opt => opt.value === schedule.categoryCode)?.label || schedule.categoryCode;
-            
-            console.log('분석된 정보:', {
-              time: timeStr,
-              title: schedule.title,
-              category: categoryLabel
-            });
-            
-            // 상태 업데이트
-            setVoiceAnalysis({
-              time: timeStr,
-              summary: schedule.title,
-              category: categoryLabel
-            });
-            
-            console.log('모달 표시');
-            setShowVoiceResultModal(true);
-            
-            // 일정 목록 새로고침
-            const data = await api.schedules.getAll();
-            console.log('일정 목록 새로고침 완료:', data.length);
-            
-            setEvents(data.map(item => ({
-              id: item._id,
-              _id: item._id,
-              title: item.title,
-              start: dayjs.utc(item.startTime).local().toDate(),
-              end: dayjs.utc(item.endTime).local().toDate(),
-              memo: item.description,
-              color: item.color || pastelColors[0],
-              categoryCode: item.categoryCode,
-              priority: item.priority,
-              type: item.type,
-              isAllDay: item.isAllDay || false,
-            })));
-          } else {
-            console.log('일정 정보 없음');
-            setModalMsg('일정 정보를 가져오는데 실패했습니다.');
-            setShowModal(true);
-          }
+          await handleVoiceInputSchedule(transcript);
         } catch (err) {
           console.error('처리 중 오류:', err);
-          setModalMsg(err.message || '일정 등록 중 오류가 발생했습니다.');
+          setError(err.message || '일정 등록 중 오류가 발생했습니다.');
           setShowModal(true);
         }
       }
@@ -483,10 +430,10 @@ function CalendarApp() {
       })));
     } catch (err) {
       if (err.message === '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.') {
-        setModalMsg(err.message);
+        setError(err.message);
         setShowModal(true);
       } else {
-        setModalMsg('일정 등록 중 오류가 발생했습니다.');
+        setError('일정 등록 중 오류가 발생했습니다.');
         setShowModal(true);
       }
     } finally {

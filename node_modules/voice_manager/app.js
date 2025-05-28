@@ -9,7 +9,7 @@ const app = express();
 
 // 1) CORS
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: true, // 모든 origin 허용
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));

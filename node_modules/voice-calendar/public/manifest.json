@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Voice Manager",
+  "name": "Voice Manager - 음성 인식 일정 관리",
   "icons": [
     {
       "src": "favicon.ico",
