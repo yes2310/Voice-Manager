@@ -7,7 +7,7 @@ const OpenAI = require('openai');
  */
 async function classifyAndExtractSchedule(text) {
   const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.REACT_APP_OPENAI_API_KEY
   });
 
   const prompt = `다음 문장에서 일정 정보를 추출해줘. 시간은 24시간제로 표시하고, 시작 시간과 종료 시간을 모두 포함해줘.

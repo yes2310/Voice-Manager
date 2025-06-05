@@ -392,8 +392,10 @@ function CalendarApp() {
       start = dayjs.tz(`${date} 00:00`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
       end = dayjs.tz(`${date} 23:59`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     } else {
-      start = dayjs.tz(`${date} ${startTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
-      end = dayjs.tz(`${date} ${endTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
+      // 일반 일정의 경우 로컬 시간대를 유지하면서 날짜와 시간 설정
+      const localDate = dayjs.tz(date, 'YYYY-MM-DD', 'Asia/Seoul');
+      start = localDate.hour(parseInt(startTime.split(':')[0])).minute(parseInt(startTime.split(':')[1])).toDate();
+      end = localDate.hour(parseInt(endTime.split(':')[0])).minute(parseInt(endTime.split(':')[1])).toDate();
     }
     
     const tmpId = `tmp-${Date.now()}`;
