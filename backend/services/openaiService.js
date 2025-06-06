@@ -1,8 +1,9 @@
+
 const { OpenAI } = require('openai');
 require('dotenv').config();
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // 환경변수에서 키 로드
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const CATEGORY_MAPPING = {
