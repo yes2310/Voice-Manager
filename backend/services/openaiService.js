@@ -1,9 +1,8 @@
-
 const { OpenAI } = require('openai');
 require('dotenv').config();
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY, // 환경변수에서 키 로드
 });
 
 const CATEGORY_MAPPING = {
@@ -28,16 +27,9 @@ function getDateString(offset = 0) {
  * @param {string} text - 음성 인식 결과 텍스트
  * @returns {Promise<{category: string, title: string, startTime: string, endTime: string, isAllDay: boolean}>}
  */
-<<<<<<< HEAD
 const classifyAndExtractSchedule = async (text) => {
   try {
     console.log('OpenAI API 호출 시작:', text);
-=======
-async function classifyAndExtractSchedule(text) {
-  const openai = new OpenAI({
-    apiKey: process.env.REACT_APP_OPENAI_API_KEY
-  });
->>>>>>> main
 
     const today = getDateString(0);
     const tomorrow = getDateString(1);
