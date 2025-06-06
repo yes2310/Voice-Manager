@@ -10,11 +10,20 @@ const scheduleSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  description: String,
+  description: {
+    type: String,
+    default: '',
+  },
 
   // 일정 종류에 따라 시간 정보 다르게 입력됨
-  startTime: Date,   // 일반/반복 일정
-  endTime: Date,     // 일반/반복 일정
+  startTime: {
+    type: Date,
+    required: true,
+  },
+  endTime: {
+    type: Date,
+    required: true,
+  },
   dueDate: Date,     // 기한 일정
 
   isRepeating: {
@@ -29,17 +38,18 @@ const scheduleSchema = new mongoose.Schema({
   categoryCode: {
     type: String,
     enum: ['school', 'housework', 'work', 'selfdev', 'family', 'health', 'event', 'goal'],
+    required: true,
   },
 
   priority: {
     type: String,
-    enum: ['높음', '보통', '낮음'],
+    enum: ['낮음', '보통', '높음'],
     default: '보통',
   },
 
   type: {
     type: String,
-    enum: ['general', 'deadline', 'repeat'],
+    enum: ['general', 'meeting', 'task', 'reminder'],
     default: 'general',
   },
 
@@ -50,6 +60,11 @@ const scheduleSchema = new mongoose.Schema({
   },
 
   isCompleted: {
+    type: Boolean,
+    default: false,
+  },
+
+  isAllDay: {
     type: Boolean,
     default: false,
   }

@@ -1,14 +1,16 @@
 import React from 'react';
 
 export default function CustomToolbar({ label, onNavigate, onView }) {
+  // 현재 연도 가져오기
+  const currentYear = new Date().getFullYear();
+
   // 월-년 형식의 label 문자열을 년-월 형식으로 변환
   const formatLabel = (originalLabel) => {
-    // 예시: "8월 2023" -> "2023년 8월"
+    // 예시: "8월 2023" -> "2025년 8월"
     const parts = originalLabel.split(' ');
     if (parts.length === 2) {
       const month = parts[0];
-      const year = parts[1];
-      return `${year}년 ${month}`;
+      return `${currentYear}년 ${month}`;
     }
     return originalLabel;
   };

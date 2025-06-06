@@ -9,35 +9,28 @@ const app = express();
 
 // 1) CORS
 app.use(cors({
-  origin: true, // 모든 origin 허용
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
 // 2) JSON body parser — 반드시 로그 미들웨어보다 먼저!
 app.use(express.json());
 
-// 3) 스케줄 로깅 미들웨어
-app.use('/api/schedules', (req, res, next) => {
-  console.log(`✅ [${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-  if (req.body && Object.keys(req.body).length) {
-    console.log('   ▶ Request Body:', req.body);
-  }
-  next();
-});
-
-// 4) 인증 로깅 미들웨어
-app.use('/api/auth', (req, res, next) => {
-  console.log(`✅ [${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+// 3) 모든 요청에 대한 로깅 미들웨어
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log('Headers:', req.headers);
   if (req.body && Object.keys(req.body).length) {
     const logBody = { ...req.body };
-    if (logBody.password) logBody.password = '********'; // 비밀번호 마스킹
-    console.log('   ▶ Request Body:', logBody);
+    if (logBody.password) logBody.password = '********';
+    console.log('Body:', logBody);
   }
   next();
 });
 
-// 5) 라우터 설정
+// 4) 라우터 설정
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/auth', authRoutes);
 

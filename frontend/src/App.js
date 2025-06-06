@@ -193,6 +193,7 @@ function CalendarApp() {
       if (silenceTimer) clearTimeout(silenceTimer);
       silenceTimer = setTimeout(() => {
         if (finalTranscript) {
+          console.log('무음 감지, 음성 인식 종료');
           rec.stop();
         }
       }, 1000);
@@ -208,144 +209,12 @@ function CalendarApp() {
 
     rec.onend = () => {
       console.log('음성 인식 종료됨');
+      console.log('최종 인식 텍스트:', finalTranscript);
       setRecording(false);
       if (silenceTimer) clearTimeout(silenceTimer);
       
       if (finalTranscript) {
-        // 날짜와 시간 파싱
-        const now = new Date();
-        let date = now.toISOString().split('T')[0];
-        let startTime = '00:00';
-        let endTime = '00:00';
-        let isAllDay = false;
-        let categoryCode = 'event';
-        let hasDateInfo = false;
-
-        // 요일 처리
-        const dayOfWeek = {
-          '월요일': 1, '화요일': 2, '수요일': 3, '목요일': 4, '금요일': 5, '토요일': 6, '일요일': 0,
-          '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0
-        };
-
-        for (const [day, value] of Object.entries(dayOfWeek)) {
-          if (finalTranscript.includes(day)) {
-            const targetDate = new Date(now);
-            const currentDay = targetDate.getDay();
-            const daysUntilTarget = (value - currentDay + 7) % 7;
-            targetDate.setDate(targetDate.getDate() + daysUntilTarget);
-            date = targetDate.toISOString().split('T')[0];
-            hasDateInfo = true;
-            break;
-          }
-        }
-
-        // 상대적 날짜 처리
-        if (finalTranscript.includes('어제')) {
-          const yesterday = new Date(now);
-          yesterday.setDate(yesterday.getDate() - 1);
-          date = yesterday.toISOString().split('T')[0];
-          hasDateInfo = true;
-        } else if (finalTranscript.includes('오늘')) {
-          date = now.toISOString().split('T')[0];
-          hasDateInfo = true;
-        } else if (finalTranscript.includes('내일')) {
-          const tomorrow = new Date(now);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          date = tomorrow.toISOString().split('T')[0];
-          hasDateInfo = true;
-        } else if (finalTranscript.includes('모레') || finalTranscript.includes('내일모레')) {
-          const dayAfterTomorrow = new Date(now);
-          dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-          date = dayAfterTomorrow.toISOString().split('T')[0];
-          hasDateInfo = true;
-        } else if (finalTranscript.includes('글피')) {
-          const threeDaysLater = new Date(now);
-          threeDaysLater.setDate(threeDaysLater.getDate() + 3);
-          date = threeDaysLater.toISOString().split('T')[0];
-          hasDateInfo = true;
-        }
-
-        // 특정 날짜 처리 (예: 6월 1일)
-        const dateMatch = finalTranscript.match(/(\d+)월\s*(\d+)일/);
-        if (dateMatch) {
-          const month = parseInt(dateMatch[1]);
-          const day = parseInt(dateMatch[2]);
-          const year = now.getFullYear();
-          const targetDate = new Date(year, month - 1, day);
-          date = targetDate.toISOString().split('T')[0];
-          hasDateInfo = true;
-        }
-
-        if (!hasDateInfo) {
-          setError('날짜 정보가 포함되어 있지 않습니다. 다시 시도해주세요.');
-          setShowModal(true);
-          return;
-        }
-
-        // 시간 파싱 (오전/오후 포함)
-        const timeMatch = finalTranscript.match(/(오전|오후)?\s*(\d+)시부터\s*(오전|오후)?\s*(\d+)시까지/);
-        if (timeMatch) {
-          const startPeriod = timeMatch[1] || timeMatch[3] || '';
-          const startHour = parseInt(timeMatch[2]);
-          const endPeriod = timeMatch[3] || startPeriod || '';
-          const endHour = parseInt(timeMatch[4]);
-          
-          // 오전/오후 처리
-          const adjustedStartHour = startPeriod === '오후' && startHour < 12 ? startHour + 12 : startHour;
-          const adjustedEndHour = endPeriod === '오후' && endHour < 12 ? endHour + 12 : endHour;
-          
-          startTime = `${adjustedStartHour.toString().padStart(2, '0')}:00`;
-          endTime = `${adjustedEndHour.toString().padStart(2, '0')}:00`;
-        } else {
-          // 단일 시간 처리 (예: 오후 5시에)
-          const singleTimeMatch = finalTranscript.match(/(오전|오후)?\s*(\d+)시/);
-          if (singleTimeMatch) {
-            const period = singleTimeMatch[1] || '';
-            const hour = parseInt(singleTimeMatch[2]);
-            const adjustedHour = period === '오후' && hour < 12 ? hour + 12 : hour;
-            startTime = `${adjustedHour.toString().padStart(2, '0')}:00`;
-            endTime = `${(adjustedHour + 1).toString().padStart(2, '0')}:00`;
-          } else {
-            isAllDay = true;
-          }
-        }
-
-        // 카테고리 자동 감지
-        if (finalTranscript.includes('회의') || finalTranscript.includes('미팅') || finalTranscript.includes('프로젝트')) {
-          categoryCode = 'work';
-        } else if (finalTranscript.includes('친구') || finalTranscript.includes('약속')) {
-          categoryCode = 'event';
-        } else if (finalTranscript.includes('시험') || finalTranscript.includes('과제')) {
-          categoryCode = 'school';
-        } else if (finalTranscript.includes('운동') || finalTranscript.includes('병원')) {
-          categoryCode = 'health';
-        }
-
-        // 제목에서 날짜와 시간 정보 제거
-        let title = finalTranscript
-          .replace(/어제|오늘|내일|모레|내일모레|글피\s*/, '')
-          .replace(/\d+월\s*\d+일\s*/, '')
-          .replace(/(월|화|수|목|금|토|일)요일\s*/, '')
-          .replace(/(오전|오후)?\s*\d+시부터\s*(오전|오후)?\s*\d+시까지\s*/, '')
-          .replace(/(오전|오후)?\s*\d+시\s*/, '')
-          .trim();
-
-        // 일정 등록 모달에 음성 인식 결과 설정
-        setManualEvent({
-          date: date,
-          startTime: startTime,
-          endTime: endTime,
-          title: title,
-          memo: '',
-          color: pastelColors[0],
-          categoryCode: categoryCode,
-          priority: PRIORITY_OPTIONS[1].value,
-          type: TYPE_OPTIONS[0].value,
-          isAllDay: isAllDay,
-        });
-        
-        // 일정 등록 모달 표시
-        setShowModal(true);
+        handleVoiceInputSchedule(finalTranscript);
       }
     };
 
@@ -564,10 +433,36 @@ function CalendarApp() {
   // 음성 인식 일정 자동 등록
   const handleVoiceInputSchedule = async (text) => {
     try {
+      console.log('음성 인식 텍스트:', text);
       setIsLoading(true);
-      await api.schedules.voiceInput(text);
-      // 일정 등록 성공 시 일정 목록 새로고침
+      const result = await api.schedules.voiceInput(text);
+      console.log('백엔드 응답 결과:', result);
+      
+      // 날짜와 시간 파싱
+      const startDate = new Date(result.schedule.startTime);
+      const endDate = new Date(result.schedule.endTime);
+      
+      // 일정 등록 모달에 결과 설정
+      const manualEventData = {
+        date: startDate.toISOString().split('T')[0], // yyyy-MM-dd 형식으로 변환
+        startTime: startDate.toTimeString().slice(0, 5), // HH:mm 형식으로 변환
+        endTime: endDate.toTimeString().slice(0, 5), // HH:mm 형식으로 변환
+        title: result.schedule.title,
+        memo: result.schedule.description || '',
+        color: result.schedule.color || pastelColors[0],
+        categoryCode: result.schedule.categoryCode,
+        priority: result.schedule.priority,
+        type: result.schedule.type,
+        isAllDay: result.schedule.isAllDay || false,
+      };
+      console.log('설정할 일정 데이터:', manualEventData);
+      
+      setManualEvent(manualEventData);
+      setShowModal(true);
+      
+      // 일정 목록 새로고침
       const data = await api.schedules.getAll();
+      console.log('새로고침된 일정 목록:', data);
       setEvents(data.map(item => ({
         id: item._id,
         _id: item._id,
@@ -582,6 +477,7 @@ function CalendarApp() {
         isAllDay: item.isAllDay || false,
       })));
     } catch (err) {
+      console.error('음성 인식 처리 중 오류:', err);
       if (err.message === '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.') {
         setError(err.message);
         setShowModal(true);

@@ -2,14 +2,24 @@ const API_URL = 'http://localhost:3001/api';
 
 // Helper to handle API responses
 const handleResponse = async (response) => {
-  const data = await response.json();
-  
-  if (!response.ok) {
-    const error = data.error || response.statusText;
-    throw new Error(error);
+  try {
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: data
+      });
+      const error = data.error || response.statusText;
+      throw new Error(error);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('API Response Error:', error);
+    throw error;
   }
-  
-  return data;
 };
 
 // Get auth token from localStorage
@@ -26,12 +36,22 @@ const api = {
   // Auth endpoints
   auth: {
     login: async (credentials) => {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      });
-      return handleResponse(response);
+      try {
+        console.log('Login attempt:', { email: credentials.email });
+        const response = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(credentials),
+        });
+        return handleResponse(response);
+      } catch (error) {
+        console.error('Login Error:', error);
+        throw error;
+      }
     },
     
     register: async (userData) => {
