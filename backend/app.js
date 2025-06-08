@@ -2,14 +2,58 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+const https = require('https');
+const fs = require('fs');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
+// 동적 ORIGIN 설정
+const getAllowedOrigins = () => {
+  const origins = [
+    'http://localhost:3000',
+    'http://localhost:3001', 
+    'https://localhost:3000',
+    'https://localhost:3001',
+    /https?:\/\/.*\.ngrok\.io$/,
+  ];
+  
+  // 현재 서버의 IP 주소를 자동으로 추가
+  const PORT = process.env.PORT || 3000;
+  const FRONTEND_PORT = process.env.FRONTEND_PORT || 3001;
+  
+  // 현재 시스템의 모든 네트워크 인터페이스에서 IP 주소 수집
+  const os = require('os');
+  const interfaces = os.networkInterfaces();
+  
+  Object.keys(interfaces).forEach(name => {
+    interfaces[name].forEach(interface => {
+      if (!interface.internal && interface.family === 'IPv4') {
+        const ip = interface.address;
+        origins.push(`http://${ip}:${PORT}`);
+        origins.push(`https://${ip}:${PORT}`);
+        origins.push(`http://${ip}:${FRONTEND_PORT}`);
+        origins.push(`https://${ip}:${FRONTEND_PORT}`);
+      }
+    });
+  });
+  
+  // 환경 변수로 설정된 호스트가 있으면 사용
+  if (process.env.HOST) {
+    origins.push(`http://${process.env.HOST}:${PORT}`);
+    origins.push(`https://${process.env.HOST}:${PORT}`);
+    origins.push(`http://${process.env.HOST}:${FRONTEND_PORT}`);
+    origins.push(`https://${process.env.HOST}:${FRONTEND_PORT}`);
+  }
+  
+  return origins;
+};
+
 // 1) CORS
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: getAllowedOrigins(),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
@@ -34,8 +78,13 @@ app.use((req, res, next) => {
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/auth', authRoutes);
 
+// 5) 정적 파일 서빙 (프로덕션 배포용)
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
 // 6) 기본 라우트 (DB 연결 및 서버 실행 로직 제거 후)
-app.get('/', (req, res) => res.send('🎉 서버 정상 작동 중!'));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
 
 // 7) 에러 핸들링 미들웨어 (DB 연결 및 서버 실행 로직 제거 후)
 app.use((err, req, res, next) => {
