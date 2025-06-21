@@ -129,4 +129,49 @@ router.post('/voice-input', async (req, res) => {
   }
 });
 
+// ✅ POST: 프롬프트로 일정 요약 요청
+router.post('/openai/summary', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: '프롬프트가 필요합니다.' });
+    }
+    // OpenAI로 프롬프트 전달 및 응답 반환
+    const response = await openaiService.summarizePrompt(prompt);
+    res.json({ summary: response });
+  } catch (err) {
+    console.error('OpenAI 요약 처리 중 오류:', err);
+    res.status(500).json({ error: err.message || '요약 처리 중 오류가 발생했습니다.' });
+  }
+});
+
+// 오늘 일정 요약(브리핑)
+router.get('/briefing', async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+    const userId = req.user.userId;
+    const schedules = await Schedule.find({
+      userId,
+      startTime: { $gte: startOfDay, $lte: endOfDay }
+    }).sort({ startTime: 1 });
+
+    if (schedules.length === 0) {
+      return res.json({ message: '오늘은 등록된 일정이 없습니다.' });
+    }
+
+    let message = `오늘 일정은 총 ${schedules.length}건입니다.\n`;
+    schedules.forEach((s, i) => {
+      const time = s.isAllDay ? '하루종일' : s.startTime.toTimeString().slice(0,5);
+      message += `${i + 1}. ${time} - ${s.title}\n`;
+    });
+    res.json({ message });
+  } catch (error) {
+    console.error('오늘 일정 브리핑 중 오류:', error);
+    res.status(500).json({ error: '오늘 일정 브리핑에 실패했습니다.' });
+  }
+});
+
 module.exports = router;
