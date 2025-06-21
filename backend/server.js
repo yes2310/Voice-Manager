@@ -8,8 +8,10 @@ const path = require('path');
 const selfsigned = require('selfsigned');
 const app = require('./app'); // 분리된 app.js를 가져옵니다.
 
-const PORT = process.env.PORT || 3000;
-const HTTP_PORT = 8080; // HTTP 포트 (80 대신 8080 사용 - 관리자 권한 불필요)
+// 포트와 환경 설정 (하드코딩)
+const HTTPS_PORT = 3000; // 내부 HTTPS 포트 (고정)
+const HTTP_PORT = 80; // HTTP 표준 포트 (80)
+const NODE_ENV = 'production'; // 프로덕션 모드 (고정)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://yes2310.duckdns.org:27017/scheduleApp';
 
 // DB 연결
@@ -20,7 +22,7 @@ mongoose.connect(MONGODB_URI)
 // HTTP에서 HTTPS로 리디렉션하는 미들웨어
 const redirectToHTTPS = (req, res) => {
   const host = req.headers.host.split(':')[0]; // 포트 제거
-  const redirectURL = `https://${host}:${PORT}${req.url}`;
+  const redirectURL = `https://${host}${req.url}`;
 
   console.log(`🔄 HTTP → HTTPS 리디렉션: ${req.url} → ${redirectURL}`);
 
@@ -94,32 +96,40 @@ const httpsOptions = {
 };
 
 // 개발 환경에서는 HTTP만 사용 (HTTPS 복잡성 제거)
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const isDevelopment = NODE_ENV !== 'production';
 
 if (isDevelopment) {
   // 개발 환경: HTTP만 사용
-  http.createServer(app).listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 HTTP 서버 실행 중 (개발모드): http://0.0.0.0:${PORT}`);
+  http.createServer(app).listen(HTTPS_PORT, '0.0.0.0', () => {
+    console.log(`🚀 HTTP 서버 실행 중 (개발모드): http://0.0.0.0:${HTTPS_PORT}`);
+    console.log(`📱 로컬 접속: http://localhost:${HTTPS_PORT}`);
     console.log('환경 변수 확인:', {
-      PORT: process.env.PORT,
-      MONGODB_URI: process.env.MONGODB_URI,
+      PORT: HTTPS_PORT,
+      MONGODB_URI: MONGODB_URI,
       OPENAI_API_KEY: process.env.OPENAI_API_KEY ? '설정됨' : '설정되지 않음'
     });
   });
 } else {
-  // 프로덕션 환경: HTTPS 사용
-  // HTTP 서버 실행 (HTTPS로 리디렉션)
+  // 프로덕션 환경: HTTP 리다이렉트 서버 + HTTPS 메인 서버
+  
+  // HTTP 리다이렉트 서버 (80 포트) - 관리자 권한 필요할 수 있음
   http.createServer(redirectToHTTPS).listen(HTTP_PORT, '0.0.0.0', () => {
-    console.log(`🔄 HTTP 리디렉션 서버 실행 중: http://0.0.0.0:${HTTP_PORT} → https://0.0.0.0:${PORT}`);
+    console.log(`🔄 HTTP 리디렉션 서버 실행 중: http://0.0.0.0:${HTTP_PORT} → https://yes2310.xyz`);
   });
 
-  // HTTPS 서버 실행 (모든 인터페이스에서 접속 가능)
-  https.createServer(httpsOptions, app).listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 HTTPS 서버 실행 중: https://0.0.0.0:${PORT}`);
-    console.log(`📱 외부 접속: https://220.68.27.138:${PORT}`);
+  // HTTPS 메인 서버 (3000 포트)
+  https.createServer(httpsOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
+    console.log(`🚀 HTTPS 서버 실행 중: https://0.0.0.0:${HTTPS_PORT}`);
+    console.log(`📱 로컬 접속: https://localhost:${HTTPS_PORT}`);
+    console.log(`🌐 외부 접속: https://yes2310.xyz`);
+    console.log('💡 포트 설정:');
+    console.log(`   - HTTP(${HTTP_PORT}) → HTTPS 리다이렉트`);
+    console.log(`   - HTTPS(${HTTPS_PORT}) → 메인 서버`);
     console.log('환경 변수 확인:', {
-      PORT: process.env.PORT,
-      MONGODB_URI: process.env.MONGODB_URI,
+      HTTPS_PORT: HTTPS_PORT,
+      HTTP_PORT: HTTP_PORT,
+      NODE_ENV: NODE_ENV,
+      MONGODB_URI: MONGODB_URI,
       OPENAI_API_KEY: process.env.OPENAI_API_KEY ? '설정됨' : '설정되지 않음'
     });
   });

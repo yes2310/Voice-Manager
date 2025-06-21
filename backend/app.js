@@ -51,6 +51,32 @@ const getAllowedOrigins = () => {
   return origins;
 };
 
+// 클라이언트 IP 주소를 가져오는 헬퍼 함수
+const getClientIP = (req) => {
+  return req.headers['cf-connecting-ip'] || // Cloudflare
+         req.headers['x-forwarded-for']?.split(',')[0] || // Proxy
+         req.headers['x-real-ip'] || // Nginx
+         req.connection?.remoteAddress ||
+         req.socket?.remoteAddress ||
+         req.connection?.socket?.remoteAddress ||
+         req.ip ||
+         'Unknown';
+};
+
+// User-Agent에서 기기 정보를 추출하는 헬퍼 함수
+const getDeviceInfo = (userAgent) => {
+  if (!userAgent) return 'Unknown';
+  
+  if (userAgent.includes('iPhone')) return 'iPhone';
+  if (userAgent.includes('iPad')) return 'iPad';
+  if (userAgent.includes('Android')) return 'Android';
+  if (userAgent.includes('Windows NT')) return 'Windows';
+  if (userAgent.includes('Macintosh')) return 'macOS';
+  if (userAgent.includes('Linux')) return 'Linux';
+  
+  return 'Unknown';
+};
+
 // 1) CORS
 app.use(cors({
   origin: getAllowedOrigins(),
@@ -62,15 +88,21 @@ app.use(cors({
 // 2) JSON body parser — 반드시 로그 미들웨어보다 먼저!
 app.use(express.json());
 
-// 3) 모든 요청에 대한 로깅 미들웨어
+// 3) 모든 요청에 대한 로깅 미들웨어 (IP 주소 포함)
 app.use((req, res, next) => {
+  const clientIP = getClientIP(req);
+  const userAgent = req.headers['user-agent'];
+  const deviceInfo = getDeviceInfo(userAgent);
+  
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log(`📱 Client: ${clientIP} (${deviceInfo})`);
   console.log('Headers:', req.headers);
   if (req.body && Object.keys(req.body).length) {
     const logBody = { ...req.body };
     if (logBody.password) logBody.password = '********';
     console.log('Body:', logBody);
   }
+  console.log('---'); // 로그 구분선
   next();
 });
 
