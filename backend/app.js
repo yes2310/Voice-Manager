@@ -13,16 +13,16 @@ const app = express();
 // 동적 ORIGIN 설정
 const getAllowedOrigins = () => {
   const origins = [
-    'http://localhost:3000',
-    'http://localhost:3001', 
-    'https://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3000', 
     'https://localhost:3001',
+    'https://localhost:3000',
     /https?:\/\/.*\.ngrok\.io$/,
   ];
   
   // 현재 서버의 IP 주소를 자동으로 추가
-  const PORT = process.env.PORT || 3001;
-  const FRONTEND_PORT = process.env.FRONTEND_PORT || 3000;
+  const PORT = process.env.PORT || 3000;
+  const FRONTEND_PORT = process.env.FRONTEND_PORT || 3001;
   
   // 현재 시스템의 모든 네트워크 인터페이스에서 IP 주소 수집
   const os = require('os');

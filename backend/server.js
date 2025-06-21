@@ -8,7 +8,7 @@ const path = require('path');
 const selfsigned = require('selfsigned');
 const app = require('./app'); // 분리된 app.js를 가져옵니다.
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const HTTP_PORT = 80; // HTTP 포트
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://yes2310.duckdns.org:27017/scheduleApp';
 
