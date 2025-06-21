@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-function Register({ onRegisterSuccess }) {
+const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -9,26 +10,28 @@ function Register({ onRegisterSuccess }) {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     
-    // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError('비밀번호가 일치하지 않습니다.');
       return;
     }
-    
+
     setIsLoading(true);
-    
+    setError('');
+
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,21 +39,21 @@ function Register({ onRegisterSuccess }) {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          password: formData.password,
+          password: formData.password
         }),
       });
-      
+
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || '회원가입에 실패했습니다.');
+
+      if (response.ok) {
+        alert('회원가입이 완료되었습니다. 로그인해 주세요.');
+        navigate('/login');
+      } else {
+        setError(data.error || '회원가입에 실패했습니다.');
       }
-      
-      // Call success callback
-      onRegisterSuccess();
-      
     } catch (error) {
-      setError(error.message);
+      console.error('Registration error:', error);
+      setError('서버 연결에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +136,7 @@ function Register({ onRegisterSuccess }) {
           <div className="text-center mt-4">
             <button
               type="button"
-              onClick={() => onRegisterSuccess('login')}
+              onClick={() => navigate('/login')}
               className="text-indigo-600 hover:text-indigo-800"
             >
               이미 계정이 있으신가요? 로그인하기
