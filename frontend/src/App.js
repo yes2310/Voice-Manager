@@ -63,6 +63,17 @@ function CalendarApp() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+
+  // 요약 모달 상태
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [summaryTab, setSummaryTab] = useState('today');
+  const [summaryData, setSummaryData] = useState({
+    today: '',
+    tomorrow: '',
+    week: '',
+    month: ''
+  });
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [manualEvent, setManualEvent] = useState({
@@ -168,7 +179,7 @@ function CalendarApp() {
 
     rec.onresult = event => {
       let interimTranscript = '';
-      
+
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
@@ -177,10 +188,10 @@ function CalendarApp() {
           interimTranscript += transcript;
         }
       }
-      
+
       console.log('중간 결과:', interimTranscript);
       console.log('누적 결과:', finalTranscript);
-      
+
       setTranscript(finalTranscript || interimTranscript);
 
       if (silenceTimer) clearTimeout(silenceTimer);
@@ -205,7 +216,7 @@ function CalendarApp() {
       console.log('최종 인식 텍스트:', finalTranscript);
       setRecording(false);
       if (silenceTimer) clearTimeout(silenceTimer);
-      
+
       if (finalTranscript) {
         handleVoiceInputSchedule(finalTranscript);
       }
@@ -215,6 +226,44 @@ function CalendarApp() {
     rec.start();
   };
   const stopRecognition = () => recognitionRef.current?.stop();
+
+  // 요약 데이터 가져오기
+  const fetchSummaryData = async (type) => {
+    try {
+      setSummaryLoading(true);
+      const res = await api.schedules.briefing(type);
+      setSummaryData(prev => ({
+        ...prev,
+        [type]: res.message || `${type === 'today' ? '오늘' : type === 'tomorrow' ? '내일' : type === 'week' ? '이번 주' : '이번 달'} 일정이 없습니다.`
+      }));
+    } catch (error) {
+      console.error('요약 데이터 가져오기 실패:', error);
+      setSummaryData(prev => ({
+        ...prev,
+        [type]: '요약 데이터를 가져오는 중 오류가 발생했습니다.'
+      }));
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  // 요약 모달 열기
+  const handleSummaryModalOpen = () => {
+    setShowSummaryModal(true);
+    // 현재 탭의 데이터가 없으면 가져오기
+    if (!summaryData[summaryTab]) {
+      fetchSummaryData(summaryTab);
+    }
+  };
+
+  // 요약 탭 변경
+  const handleSummaryTabChange = (tab) => {
+    setSummaryTab(tab);
+    // 해당 탭의 데이터가 없으면 가져오기
+    if (!summaryData[tab]) {
+      fetchSummaryData(tab);
+    }
+  };
 
   // Select slot -> manual add modal
   const handleSelectSlot = slotInfo => {
@@ -247,7 +296,7 @@ function CalendarApp() {
     e.preventDefault();
     const { date, startTime, endTime, title, memo, color, categoryCode, priority, type, isAllDay } = manualEvent;
     if (!date || (!isAllDay && (!startTime || !endTime)) || !title) return;
-    
+
     let start, end;
     if (isAllDay) {
       // 하루종일 이벤트인 경우 00:00부터 23:59까지로 설정
@@ -259,25 +308,27 @@ function CalendarApp() {
       start = localDate.hour(parseInt(startTime.split(':')[0])).minute(parseInt(startTime.split(':')[1])).toDate();
       end = localDate.hour(parseInt(endTime.split(':')[0])).minute(parseInt(endTime.split(':')[1])).toDate();
     }
-    
+
     const tmpId = `tmp-${Date.now()}`;
-    const tmpEvt = { 
-      id: tmpId, 
-      title, 
-      start, 
-      end, 
-      memo, 
-      color, 
-      categoryCode, 
-      priority, 
+    const tmpEvt = {
+      id: tmpId,
+      title,
+      start,
+      end,
+      memo,
+      color,
+      categoryCode,
+      priority,
       type,
-      isAllDay 
+      isAllDay
     };
     setEvents(prev => [...prev, tmpEvt]);
     setShowModal(false);
     try {
       const saved = await createSchedule(tmpEvt);
       setEvents(prev => prev.map(ev => ev.id === tmpId ? { ...ev, id: saved._id, _id: saved._id } : ev));
+
+
     } catch (err) {
       console.error(err);
       setEvents(prev => prev.filter(ev => ev.id !== tmpId));
@@ -312,7 +363,7 @@ function CalendarApp() {
   const handleDeleteEvent = async () => {
     try {
       if (!selectedEvent || !selectedEvent._id) return;
-      
+
       await api.schedules.delete(selectedEvent._id);
       setEvents(prev => prev.filter(ev => ev.id !== selectedEvent.id));
       setShowEventModal(false);
@@ -334,7 +385,7 @@ function CalendarApp() {
   const handleEditSubmit = async e => {
     e.preventDefault();
     const { date, startTime, endTime, memo, color, categoryCode, priority, type, isAllDay, _id } = editEvent;
-    
+
     let start, end;
     if (isAllDay) {
       start = dayjs.tz(`${date} 00:00`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
@@ -343,7 +394,7 @@ function CalendarApp() {
       start = dayjs.tz(`${date} ${startTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
       end = dayjs.tz(`${date} ${endTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     }
-    
+
     const updatedEvt = { ...editEvent, start, end, memo, color, categoryCode, priority, type, isAllDay };
     setEvents(prev => prev.map(ev => ev.id === _id ? updatedEvt : ev));
     setEditMode(false);
@@ -408,10 +459,10 @@ function CalendarApp() {
       setError('확인 텍스트가 일치하지 않습니다.');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       await api.auth.deleteAccount();
       logout();
@@ -427,15 +478,45 @@ function CalendarApp() {
   const handleVoiceInputSchedule = async (text) => {
     try {
       setIsLoading(true);
-      // '오늘 일정 요약' 명령어 감지
+      // 일정 요약/브리핑 명령어 감지 (확장된 범위)
       const lowerText = text.toLowerCase();
-      if (
-        lowerText.includes('오늘 일정') &&
-        (lowerText.includes('요약') || lowerText.includes('브리핑') || lowerText.includes('알려') || lowerText.includes('말해'))
-      ) {
-        // 오늘 일정 브리핑 API 호출
-        const res = await api.schedules.briefing();
-        const message = res.message || '오늘 일정이 없습니다.';
+      const isBriefingCommand = (
+        (lowerText.includes('요약') || lowerText.includes('브리핑') || lowerText.includes('알려') || lowerText.includes('말해')) &&
+        (lowerText.includes('일정') || lowerText.includes('스케줄'))
+      );
+
+      if (isBriefingCommand) {
+        console.log('🎯 브리핑 명령 감지:', text);
+        console.log('🔍 소문자 변환:', lowerText);
+
+        let briefingType = 'today'; // 기본값: 오늘
+        let briefingText = '오늘';
+
+        if (lowerText.includes('내일')) {
+          briefingType = 'tomorrow';
+          briefingText = '내일';
+          console.log('📅 내일 일정 요청');
+        } else if (lowerText.includes('이번 주') || lowerText.includes('이번주')) {
+          briefingType = 'week';
+          briefingText = '이번 주';
+          console.log('📅 이번 주 일정 요청');
+        } else if (lowerText.includes('이번 달') || lowerText.includes('이번달')) {
+          briefingType = 'month';
+          briefingText = '이번 달';
+          console.log('📅 이번 달 일정 요청');
+        } else {
+          console.log('📅 오늘 일정 요청 (기본값)');
+        }
+
+        console.log('🚀 API 호출:', `briefing(${briefingType})`);
+
+        // 확장된 브리핑 API 호출
+        const res = await api.schedules.briefing(briefingType);
+        const message = res.message || `${briefingText} 일정이 없습니다.`;
+
+        console.log('📝 서버 응답:', res);
+        console.log('🔊 TTS 메시지:', message);
+
         // TTS로 읽어주기
         if ('speechSynthesis' in window) {
           const utter = new window.SpeechSynthesisUtterance(message);
@@ -449,11 +530,11 @@ function CalendarApp() {
       // 기존: 일정 자동 등록
       const result = await api.schedules.voiceInput(text);
       console.log('백엔드 응답 결과:', result);
-      
+
       // 날짜와 시간 파싱
       const startDate = new Date(result.schedule.startTime);
       const endDate = new Date(result.schedule.endTime);
-      
+
       // 일정 등록 모달에 결과 설정
       const manualEventData = {
         date: startDate.toISOString().split('T')[0], // yyyy-MM-dd 형식으로 변환
@@ -468,10 +549,12 @@ function CalendarApp() {
         isAllDay: result.schedule.isAllDay || false,
       };
       console.log('설정할 일정 데이터:', manualEventData);
-      
+
       setManualEvent(manualEventData);
       setShowModal(true);
-      
+
+
+
       // 일정 목록 새로고침
       const data = await api.schedules.getAll();
       console.log('새로고침된 일정 목록:', data);
@@ -513,7 +596,7 @@ function CalendarApp() {
           >
             {currentUser?.name?.charAt(0) || currentUser?.email?.charAt(0) || 'U'}
           </button>
-          
+
           {/* 프로필 드롭다운 메뉴 */}
           {showProfileModal && (
             <div className="absolute top-12 right-0 bg-white rounded-xl shadow-xl w-72 z-50 border border-gray-100 overflow-hidden">
@@ -556,38 +639,58 @@ function CalendarApp() {
       </header>
 
       <main className="max-w-5xl mx-auto space-y-8">
-        {/* 음성 버튼 */}
-        <div className="flex justify-center">
+        {/* 음성 버튼 & 요약 버튼 */}
+        <div className="flex justify-center gap-4">
           <button
             onClick={recording ? stopRecognition : startRecognition}
-            className={`flex items-center space-x-2 px-8 py-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${
-              recording 
-                ? "bg-red-600 text-white ring-4 ring-red-300 animate-pulse" 
-                : "bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
-            }`}
+            className={`flex items-center space-x-2 px-8 py-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${recording
+              ? "bg-red-600 text-white ring-4 ring-red-300 animate-pulse"
+              : "bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
+              }`}
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
               className={`h-5 w-5 ${recording ? "animate-bounce" : ""}`}
-              fill="none" 
-              viewBox="0 0 24 24" 
+              fill="none"
+              viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
               />
             </svg>
             <span className="font-medium">{recording ? "음성 인식 중지" : "음성 인식 시작"}</span>
+          </button>
+
+          <button
+            onClick={handleSummaryModalOpen}
+            className="flex items-center space-x-2 px-8 py-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <span className="font-medium">일정 요약</span>
           </button>
         </div>
 
         {/* 실시간 인식 텍스트 박스: recording 중이거나 transcript 있을 때만 */}
         {(recording || transcript) && (
           <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-4 text-gray-800 mb-6 min-h-[3rem] relative border-l-4 border-indigo-500 transition-all duration-500">
-            <div className={`absolute top-0 left-0 h-full max-w-full bg-indigo-50 rounded-l-lg transition-all duration-500 ${recording ? "animate-pulse" : ""}`} style={{width: recording ? '30%' : '0%'}}></div>
+            <div className={`absolute top-0 left-0 h-full max-w-full bg-indigo-50 rounded-l-lg transition-all duration-500 ${recording ? "animate-pulse" : ""}`} style={{ width: recording ? '30%' : '0%' }}></div>
             <p className="relative z-10">
               {transcript || '음성을 인식 중입니다...'}
             </p>
@@ -636,7 +739,7 @@ function CalendarApp() {
                 &times;
               </button>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <form onSubmit={handleManualSubmit} className="space-y-4">
                 {/* 날짜 */}
@@ -651,7 +754,7 @@ function CalendarApp() {
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                
+
                 {/* 하루종일 체크박스 */}
                 <div className="flex items-center">
                   <input
@@ -666,7 +769,7 @@ function CalendarApp() {
                     하루종일
                   </label>
                 </div>
-                
+
                 {/* 시간 - 하루종일이 아닐 때만 표시 */}
                 {!manualEvent.isAllDay && (
                   <div className="flex space-x-4">
@@ -726,9 +829,8 @@ function CalendarApp() {
                         key={color}
                         type="button"
                         onClick={() => setManualEvent(prev => ({ ...prev, color }))}
-                        className={`w-8 h-8 rounded-full border-2 ${
-                          manualEvent.color === color ? 'border-gray-800' : 'border-transparent'
-                        }`}
+                        className={`w-8 h-8 rounded-full border-2 ${manualEvent.color === color ? 'border-gray-800' : 'border-transparent'
+                          }`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
@@ -812,19 +914,19 @@ function CalendarApp() {
               &times;
             </button>
           </div>
-          
+
           <div className="mb-8">
             <div className="text-gray-600 mb-1">이름</div>
             <div className="text-xl font-medium">{currentUser?.name}</div>
           </div>
-          
+
           <div className="mb-8">
             <div className="text-gray-600 mb-1">이메일</div>
             <div className="text-xl font-medium">{currentUser?.email}</div>
           </div>
-          
+
           <hr className="my-6 border-gray-200" />
-          
+
           <div className="mb-6">
             <button
               onClick={() => {
@@ -835,20 +937,20 @@ function CalendarApp() {
               계정 삭제
             </button>
           </div>
-          
+
           {isDeleting && (
             <div className="border border-red-300 rounded-md p-4 bg-red-50">
               <h3 className="text-lg font-medium text-red-800 mb-2">계정 삭제 확인</h3>
               <p className="text-red-700 mb-4">
                 계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
               </p>
-              
+
               {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                   {error}
                 </div>
               )}
-              
+
               <div className="mb-4">
                 <label className="block text-gray-700 mb-1">확인을 위해 "계정삭제"를 입력하세요</label>
                 <input
@@ -858,7 +960,7 @@ function CalendarApp() {
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
-              
+
               <div className="flex space-x-4">
                 <button
                   onClick={() => setIsDeleting(false)}
@@ -869,18 +971,17 @@ function CalendarApp() {
                 <button
                   onClick={handleDeleteAccount}
                   disabled={confirmText !== '계정삭제' || isLoading}
-                  className={`px-4 py-2 ${
-                    confirmText !== '계정삭제' || isLoading
-                      ? 'bg-red-400'
-                      : 'bg-red-600 hover:bg-red-700'
-                  } text-white rounded-md transition`}
+                  className={`px-4 py-2 ${confirmText !== '계정삭제' || isLoading
+                    ? 'bg-red-400'
+                    : 'bg-red-600 hover:bg-red-700'
+                    } text-white rounded-md transition`}
                 >
                   {isLoading ? '처리 중...' : '계정 영구 삭제'}
                 </button>
               </div>
             </div>
           )}
-          
+
           <button
             onClick={() => {
               document.body.style.overflow = '';
@@ -898,7 +999,7 @@ function CalendarApp() {
         <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
             {/* 색상이 적용된 헤더 */}
-            <div 
+            <div
               className="px-8 py-4 flex justify-between items-center border-b border-gray-100"
             >
               <h3 className="text-2xl font-semibold text-gray-800">일정 정보</h3>
@@ -909,14 +1010,14 @@ function CalendarApp() {
                 &times;
               </button>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <div className="space-y-4">
                 <div>
                   <div className="text-sm text-gray-500">제목</div>
                   <div className="text-lg font-medium">{selectedEvent.title}</div>
                 </div>
-                
+
                 <div className="flex space-x-4">
                   <div className="flex-1">
                     <div className="text-sm text-gray-500">날짜</div>
@@ -928,7 +1029,7 @@ function CalendarApp() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex space-x-4">
                   <div className="flex-1">
                     <div className="text-sm text-gray-500">시작 시간</div>
@@ -949,14 +1050,14 @@ function CalendarApp() {
                     </div>
                   </div>
                 </div>
-                
+
                 {selectedEvent.memo && (
                   <div>
                     <div className="text-sm text-gray-500">메모</div>
                     <div className="p-2 bg-gray-50 rounded-md text-gray-700 mt-1">{selectedEvent.memo}</div>
                   </div>
                 )}
-                
+
                 <div className="flex space-x-4">
                   <div className="flex-1">
                     <div className="text-sm text-gray-500">분류</div>
@@ -977,7 +1078,7 @@ function CalendarApp() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-sm text-gray-500">유형</div>
@@ -988,7 +1089,7 @@ function CalendarApp() {
                       {TYPE_OPTIONS.find(opt => opt.value === selectedEvent.type)?.label || selectedEvent.type}
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="text-sm text-gray-500">색상</div>
                     <div className="flex items-center mt-1">
@@ -999,7 +1100,7 @@ function CalendarApp() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* 하루종일 여부 */}
                 <div>
                   <div className="text-sm text-gray-500">일정 유형</div>
@@ -1011,7 +1112,7 @@ function CalendarApp() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-100">
                 <button
                   onClick={handleDeleteEvent}
@@ -1050,7 +1151,7 @@ function CalendarApp() {
                 &times;
               </button>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <form onSubmit={handleEditSubmit} className="space-y-5">
                 {/* 날짜 */}
@@ -1065,7 +1166,7 @@ function CalendarApp() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                   />
                 </div>
-                
+
                 {/* 하루종일 체크박스 */}
                 <div className="flex items-center">
                   <input
@@ -1080,7 +1181,7 @@ function CalendarApp() {
                     하루종일
                   </label>
                 </div>
-                
+
                 {/* 시간 - 하루종일이 아닐 때만 표시 */}
                 {!editEvent.isAllDay && (
                   <div className="flex space-x-4">
@@ -1208,6 +1309,77 @@ function CalendarApp() {
           </div>
         </div>
       )}
+
+      {/* 요약 모달 */}
+      {showSummaryModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+            <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100">
+              <h3 className="text-2xl font-semibold text-gray-800">📋 일정 요약</h3>
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="text-gray-400 hover:text-gray-700 text-xl transition-colors"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* 탭 네비게이션 */}
+            <div className="px-6 py-4 border-b border-gray-100">
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                {[
+                  { key: 'today', label: '오늘' },
+                  { key: 'tomorrow', label: '내일' },
+                  { key: 'week', label: '이번 주' },
+                  { key: 'month', label: '이번 달' }
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => handleSummaryTabChange(tab.key)}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${summaryTab === tab.key
+                      ? 'bg-white text-indigo-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 요약 내용 */}
+            <div className="p-6 max-h-96 overflow-y-auto">
+              {summaryLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <span className="ml-3 text-gray-600">요약 정보를 가져오는 중...</span>
+                </div>
+              ) : (
+                <div className="whitespace-pre-line text-gray-700 leading-relaxed">
+                  {summaryData[summaryTab] || '해당 기간의 일정 정보가 없습니다.'}
+                </div>
+              )}
+            </div>
+
+            {/* 하단 버튼 */}
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-between">
+              <button
+                onClick={() => fetchSummaryData(summaryTab)}
+                disabled={summaryLoading}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🔄 새로고침
+              </button>
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1232,15 +1404,15 @@ function App() {
         <Routes>
           <Route path="/login" element={
             authView === 'login' ? (
-              <Login 
-                onLogin={handleLoginSuccess} 
+              <Login
+                onLogin={handleLoginSuccess}
                 onForgotPassword={() => setAuthView('forgot-password')}
                 onRegister={() => setAuthView('register')}
               />
             ) : authView === 'register' ? (
               <Register onRegisterSuccess={handleRegisterSuccess} />
             ) : (
-              <ForgotPassword 
+              <ForgotPassword
                 onSuccess={() => setAuthView('login')}
                 onBackToLogin={() => setAuthView('login')}
               />

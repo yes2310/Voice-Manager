@@ -4,7 +4,7 @@ const API_URL = '/api';
 const handleResponse = async (response) => {
   try {
     const data = await response.json();
-    
+
     if (!response.ok) {
       console.error('API Error:', {
         status: response.status,
@@ -14,7 +14,7 @@ const handleResponse = async (response) => {
       const error = data.error || response.statusText;
       throw new Error(error);
     }
-    
+
     return data;
   } catch (error) {
     console.error('API Response Error:', error);
@@ -40,7 +40,7 @@ const api = {
         console.log('Login attempt:', { email: credentials.email });
         const response = await fetch(`${API_URL}/auth/login`, {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
@@ -53,7 +53,7 @@ const api = {
         throw error;
       }
     },
-    
+
     register: async (userData) => {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
@@ -72,7 +72,7 @@ const api = {
       });
       return handleResponse(response);
     },
-    
+
     // 비밀번호 재설정
     resetPassword: async (data) => {
       const response = await fetch(`${API_URL}/auth/reset-password`, {
@@ -82,12 +82,12 @@ const api = {
       });
       return handleResponse(response);
     },
-    
+
     // 회원 탈퇴
     deleteAccount: async () => {
       const token = getToken();
       console.log('토큰 확인:', token ? 'Token exists' : 'No token');
-      
+
       try {
         const response = await fetch(`${API_URL}/auth/delete`, {
           method: 'DELETE',
@@ -96,12 +96,12 @@ const api = {
             'Content-Type': 'application/json'
           },
         });
-        
+
         if (!response.ok) {
           console.error('Delete account error status:', response.status);
           console.error('Delete account error statusText:', response.statusText);
         }
-        
+
         return handleResponse(response);
       } catch (error) {
         console.error('Delete account error:', error);
@@ -109,22 +109,22 @@ const api = {
       }
     },
   },
-  
+
   // Schedules endpoints
   schedules: {
     getAll: async () => {
       const response = await fetch(`${API_URL}/schedules`, {
-        headers: { 
+        headers: {
           ...authHeader(),
         },
       });
       return handleResponse(response);
     },
-    
+
     create: async (scheduleData) => {
       const response = await fetch(`${API_URL}/schedules`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...authHeader(),
         },
@@ -132,11 +132,11 @@ const api = {
       });
       return handleResponse(response);
     },
-    
+
     update: async (id, scheduleData) => {
       const response = await fetch(`${API_URL}/schedules/${id}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...authHeader(),
         },
@@ -144,7 +144,7 @@ const api = {
       });
       return handleResponse(response);
     },
-    
+
     delete: async (id) => {
       const response = await fetch(`${API_URL}/schedules/${id}`, {
         method: 'DELETE',
@@ -165,8 +165,8 @@ const api = {
       return handleResponse(response);
     },
 
-    briefing: async () => {
-      const response = await fetch(`${API_URL}/schedules/briefing`, {
+    briefing: async (type = 'today') => {
+      const response = await fetch(`${API_URL}/schedules/briefing?type=${type}`, {
         headers: {
           ...authHeader(),
         },

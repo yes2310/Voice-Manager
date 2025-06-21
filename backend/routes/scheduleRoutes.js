@@ -12,10 +12,10 @@ router.get('/', async (req, res) => {
   try {
     // req.user에서 userId 추출 (auth 미들웨어에서 설정됨)
     const userId = req.user.userId;
-    
+
     // 사용자 자신의 일정만 조회
     const schedules = await Schedule.find({ userId });
-    
+
     console.log(`   ▶ 일정 개수: ${schedules.length}, 사용자: ${userId}`);
     res.json(schedules);
   } catch (err) {
@@ -29,16 +29,16 @@ router.post('/', async (req, res) => {
   try {
     // req.user에서 userId 추출 (auth 미들웨어에서 설정됨)
     const userId = req.user.userId;
-    
+
     // 요청 본문의 userId를 auth 미들웨어에서 확인된 userId로 설정
     const scheduleData = {
       ...req.body,
       userId
     };
-    
+
     const schedule = new Schedule(scheduleData);
     await schedule.save();
-    
+
     res.status(201).json({ message: '일정 등록 완료', schedule });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -51,17 +51,17 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     const userId = req.user.userId;
-    
+
     // 먼저 일정이 현재 로그인한 사용자의 것인지 확인
     const schedule = await Schedule.findOne({ _id: id, userId });
-    
+
     if (!schedule) {
       return res.status(404).json({ error: '일정을 찾을 수 없거나 접근 권한이 없습니다.' });
     }
-    
+
     // 권한 확인 후 업데이트 진행
     const updatedSchedule = await Schedule.findByIdAndUpdate(id, updates, { new: true });
-    
+
     res.json({ message: '일정 수정 완료', schedule: updatedSchedule });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -73,17 +73,17 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
-    
+
     // 먼저 일정이 현재 로그인한 사용자의 것인지 확인
     const schedule = await Schedule.findOne({ _id: id, userId });
-    
+
     if (!schedule) {
       return res.status(404).json({ error: '일정을 찾을 수 없거나 접근 권한이 없습니다.' });
     }
-    
+
     // 일정 삭제
     await Schedule.findByIdAndDelete(id);
-    
+
     res.json({ message: '일정 삭제 완료' });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -118,10 +118,10 @@ router.post('/voice-input', async (req, res) => {
 
     const schedule = new Schedule(scheduleData);
     await schedule.save();
-    
-    res.status(201).json({ 
-      message: '일정 자동 등록 완료', 
-      schedule 
+
+    res.status(201).json({
+      message: '일정 자동 등록 완료',
+      schedule
     });
   } catch (err) {
     console.error('음성 인식 처리 중 오류:', err);
@@ -145,32 +145,90 @@ router.post('/openai/summary', async (req, res) => {
   }
 });
 
-// 오늘 일정 요약(브리핑)
+// 일정 요약(브리핑) - 오늘/내일/이번주/이번달
 router.get('/briefing', async (req, res) => {
   try {
+    const { type = 'today' } = req.query;
     const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    let startDate, endDate, periodText;
 
-    const userId = req.user.userId;
-    const schedules = await Schedule.find({
-      userId,
-      startTime: { $gte: startOfDay, $lte: endOfDay }
-    }).sort({ startTime: 1 });
+    console.log(`📅 브리핑 요청: type=${type}, 현재시간=${today}`);
 
-    if (schedules.length === 0) {
-      return res.json({ message: '오늘은 등록된 일정이 없습니다.' });
+    switch (type) {
+      case 'tomorrow':
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        startDate = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 0, 0, 0);
+        endDate = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59);
+        periodText = '내일';
+        break;
+
+      case 'week':
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // 일요일부터
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // 토요일까지
+        startDate = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate(), 0, 0, 0);
+        endDate = new Date(endOfWeek.getFullYear(), endOfWeek.getMonth(), endOfWeek.getDate(), 23, 59, 59);
+        periodText = '이번 주';
+        break;
+
+      case 'month':
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0);
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+        periodText = '이번 달';
+        break;
+
+      default: // 'today'
+        startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+        periodText = '오늘';
     }
 
-    let message = `오늘 일정은 총 ${schedules.length}건입니다.\n`;
+    const userId = req.user.userId;
+
+    console.log(`🔍 검색 범위: ${startDate} ~ ${endDate}`);
+    console.log(`👤 사용자: ${userId}`);
+
+    const schedules = await Schedule.find({
+      userId,
+      startTime: { $gte: startDate, $lte: endDate }
+    }).sort({ startTime: 1 });
+
+    console.log(`📋 찾은 일정 수: ${schedules.length}`);
+    if (schedules.length > 0) {
+      console.log('📝 일정 목록:', schedules.map(s => ({ title: s.title, startTime: s.startTime })));
+    }
+
+    if (schedules.length === 0) {
+      return res.json({ message: `${periodText}은 등록된 일정이 없습니다.` });
+    }
+
+    let message = `${periodText} 일정은 총 ${schedules.length}건입니다.\n`;
+    console.log(`💬 생성된 메시지 시작: "${periodText} 일정은 총 ${schedules.length}건입니다."`);
+
     schedules.forEach((s, i) => {
-      const time = s.isAllDay ? '하루종일' : s.startTime.toTimeString().slice(0,5);
-      message += `${i + 1}. ${time} - ${s.title}\n`;
+      const date = type === 'today' || type === 'tomorrow' ? '' : `${s.startTime.getMonth() + 1}월 ${s.startTime.getDate()}일 `;
+      const time = s.isAllDay ? '하루종일' : s.startTime.toTimeString().slice(0, 5);
+      const lineMessage = `${i + 1}. ${date}${time} - ${s.title}`;
+      message += lineMessage + '\n';
+      console.log(`📄 추가된 줄: "${lineMessage}"`);
     });
+
+    console.log(`✅ 최종 메시지: "${message}"`);
+    console.log(`📤 응답 전송: { message: "${message}" }`);
+
+    // 캐시 방지 헤더 추가
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     res.json({ message });
   } catch (error) {
-    console.error('오늘 일정 브리핑 중 오류:', error);
-    res.status(500).json({ error: '오늘 일정 브리핑에 실패했습니다.' });
+    console.error('일정 브리핑 중 오류:', error);
+    res.status(500).json({ error: '일정 브리핑에 실패했습니다.' });
   }
 });
 
