@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001/api';
+const API_URL = '/api';
 
 // Helper to handle API responses
 const handleResponse = async (response) => {
@@ -161,6 +161,15 @@ const api = {
           ...authHeader(),
         },
         body: JSON.stringify({ text }),
+      });
+      return handleResponse(response);
+    },
+
+    briefing: async () => {
+      const response = await fetch(`${API_URL}/schedules/briefing`, {
+        headers: {
+          ...authHeader(),
+        },
       });
       return handleResponse(response);
     },

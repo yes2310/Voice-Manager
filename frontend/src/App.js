@@ -78,13 +78,6 @@ function CalendarApp() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const recognitionRef = useRef(null);
-  const [showVoiceResultModal, setShowVoiceResultModal] = useState(false);
-  const [voiceAnalysis, setVoiceAnalysis] = useState({
-    time: '',
-    summary: '',
-    category: ''
-  });
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
 
   // Load schedules
   useEffect(() => {
@@ -430,11 +423,30 @@ function CalendarApp() {
     }
   };
 
-  // 음성 인식 일정 자동 등록
+  // 음성 인식 일정 자동 등록 및 오늘 일정 브리핑 분기
   const handleVoiceInputSchedule = async (text) => {
     try {
-      console.log('음성 인식 텍스트:', text);
       setIsLoading(true);
+      // '오늘 일정 요약' 명령어 감지
+      const lowerText = text.toLowerCase();
+      if (
+        lowerText.includes('오늘 일정') &&
+        (lowerText.includes('요약') || lowerText.includes('브리핑') || lowerText.includes('알려') || lowerText.includes('말해'))
+      ) {
+        // 오늘 일정 브리핑 API 호출
+        const res = await api.schedules.briefing();
+        const message = res.message || '오늘 일정이 없습니다.';
+        // TTS로 읽어주기
+        if ('speechSynthesis' in window) {
+          const utter = new window.SpeechSynthesisUtterance(message);
+          utter.lang = 'ko-KR';
+          window.speechSynthesis.speak(utter);
+        }
+        setTranscript('');
+        setIsLoading(false);
+        return;
+      }
+      // 기존: 일정 자동 등록
       const result = await api.schedules.voiceInput(text);
       console.log('백엔드 응답 결과:', result);
       

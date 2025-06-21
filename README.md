@@ -45,8 +45,8 @@ npm install
 npm run dev
 ```
 
-- 백엔드: http://localhost:3000  
-- 프론트엔드: http://localhost:3001 (또는 `frontend/.env`에 지정된 포트)
+- 백엔드: http://localhost:3001  
+- 프론트엔드: http://localhost:3000 (또는 `frontend/.env`에 지정된 포트)
 
 ### ✅ 개별 실행
 
@@ -69,12 +69,13 @@ npm run start:frontend
 ### frontend/.env
 
 ```
-PORT=3001
+PORT=3000
 ```
 
 ### backend/.env
 
 ```
+PORT=3001
 MONGODB_URI=<your-mongodb-uri>
 JWT_SECRET=<your-jwt-secret>
 ```

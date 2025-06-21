@@ -1,6 +1,4 @@
-
-const { OpenAI } = require('openai');
-require('dotenv').config();
+const OpenAI = require('openai');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -89,7 +87,13 @@ const classifyAndExtractSchedule = async (text) => {
 
     console.log('OpenAI API 응답:', response.choices[0].message.content);
 
-    const result = JSON.parse(response.choices[0].message.content);
+    let result;
+    try {
+      result = JSON.parse(response.choices[0].message.content);
+    } catch (e) {
+      // JSON이 아니면 에러 메시지 반환
+      throw new Error('일정 정보를 추출하는데 실패했습니다. 다시 시도해주세요.');
+    }
 
     if (!result.title || !result.category) {
       throw new Error('일정 제목과 카테고리를 모두 말씀해 주세요.');

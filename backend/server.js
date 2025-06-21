@@ -1,4 +1,4 @@
-require('dotenv').config(); // 환경 변수 로드. 최상단에 위치해야 합니다.
+require('dotenv').config({ path: require('path').join(__dirname, '.env') }); // 환경 변수 로드. backend/.env를 명시적으로 지정
 
 const mongoose = require('mongoose');
 const https = require('https');
@@ -8,7 +8,7 @@ const path = require('path');
 const selfsigned = require('selfsigned');
 const app = require('./app'); // 분리된 app.js를 가져옵니다.
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const HTTP_PORT = 80; // HTTP 포트
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://yes2310.duckdns.org:27017/scheduleApp';
 
