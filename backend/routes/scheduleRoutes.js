@@ -90,7 +90,50 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// ✅ POST: 음성 인식 텍스트로 일정 자동 등록
+// ✅ POST: 음성 인식 텍스트 파싱만 (저장하지 않음)
+router.post('/voice-parse', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ error: '음성 인식 텍스트가 필요합니다.' });
+    }
+
+    const result = await openaiService.classifyAndExtractSchedule(text);
+    if (!result.title || !result.category) {
+      return res.status(400).json({ error: '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.' });
+    }
+
+    // 날짜 문자열을 한국시간(KST)에서 UTC로 올바르게 변환
+    const startTime = new Date(result.startTime).toISOString();
+    const endTime = new Date(result.endTime).toISOString();
+
+    console.log(`🕐 날짜 변환 (KST→UTC): "${result.startTime}" → "${startTime}"`);
+    console.log(`🕐 날짜 변환 (KST→UTC): "${result.endTime}" → "${endTime}"`);
+
+    // 파싱된 결과만 반환 (저장하지 않음)
+    const scheduleData = {
+      title: result.title,
+      categoryCode: result.category,
+      startTime: startTime,
+      endTime: endTime,
+      type: 'general',
+      priority: '보통',
+      color: '#BAE1FF',
+      isAllDay: result.isAllDay || false,
+      description: result.description || ''
+    };
+
+    res.json({
+      message: '음성 인식 파싱 완료',
+      schedule: scheduleData
+    });
+  } catch (err) {
+    console.error('음성 인식 파싱 중 오류:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ✅ POST: 음성 인식 텍스트로 일정 자동 등록 (기존 API - 호환성 유지)
 router.post('/voice-input', async (req, res) => {
   try {
     const { text } = req.body;
@@ -104,16 +147,21 @@ router.post('/voice-input', async (req, res) => {
     }
 
     const userId = req.user.userId;
+
+    // 날짜 문자열을 한국시간(KST)에서 UTC로 올바르게 변환
+    const startTime = new Date(result.startTime).toISOString();
+    const endTime = new Date(result.endTime).toISOString();
+
     const scheduleData = {
       title: result.title,
       categoryCode: result.category,
-      startTime: result.startTime,
-      endTime: result.endTime,
+      startTime: startTime,
+      endTime: endTime,
       userId,
       type: 'general',
       priority: '보통',
       color: '#BAE1FF',
-      isAllDay: false
+      isAllDay: result.isAllDay || false
     };
 
     const schedule = new Schedule(scheduleData);

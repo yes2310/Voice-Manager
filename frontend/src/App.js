@@ -527,15 +527,15 @@ function CalendarApp() {
         setIsLoading(false);
         return;
       }
-      // 기존: 일정 자동 등록
-      const result = await api.schedules.voiceInput(text);
-      console.log('백엔드 응답 결과:', result);
+      // 음성 텍스트 파싱만 수행 (저장하지 않음)
+      const result = await api.schedules.voiceParse(text);
+      console.log('🎯 음성 파싱 결과:', result);
 
       // 날짜와 시간 파싱
       const startDate = new Date(result.schedule.startTime);
       const endDate = new Date(result.schedule.endTime);
 
-      // 일정 등록 모달에 결과 설정
+      // 일정 등록 모달에 파싱된 결과 설정
       const manualEventData = {
         date: startDate.toISOString().split('T')[0], // yyyy-MM-dd 형식으로 변환
         startTime: startDate.toTimeString().slice(0, 5), // HH:mm 형식으로 변환
@@ -548,29 +548,13 @@ function CalendarApp() {
         type: result.schedule.type,
         isAllDay: result.schedule.isAllDay || false,
       };
-      console.log('설정할 일정 데이터:', manualEventData);
+      console.log('📝 모달에 설정할 일정 데이터:', manualEventData);
 
       setManualEvent(manualEventData);
       setShowModal(true);
 
-
-
-      // 일정 목록 새로고침
-      const data = await api.schedules.getAll();
-      console.log('새로고침된 일정 목록:', data);
-      setEvents(data.map(item => ({
-        id: item._id,
-        _id: item._id,
-        title: item.title,
-        start: dayjs.utc(item.startTime).local().toDate(),
-        end: dayjs.utc(item.endTime).local().toDate(),
-        memo: item.description,
-        color: item.color || pastelColors[0],
-        categoryCode: item.categoryCode,
-        priority: item.priority,
-        type: item.type,
-        isAllDay: item.isAllDay || false,
-      })));
+      // ⚠️ 여기서는 일정 목록을 새로고침하지 않음 
+      // 사용자가 모달에서 "확인"을 눌러야 실제 저장됨
     } catch (err) {
       console.error('음성 인식 처리 중 오류:', err);
       if (err.message === '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.') {

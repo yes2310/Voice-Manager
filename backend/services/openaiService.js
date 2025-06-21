@@ -16,9 +16,11 @@ const CATEGORY_MAPPING = {
 };
 
 function getDateString(offset = 0) {
+  // 한국 시간 기준으로 날짜 계산
   const d = new Date();
-  d.setDate(d.getDate() + offset);
-  return d.toISOString().slice(0, 10);
+  const koreaTime = new Date(d.getTime() + (9 * 60 * 60 * 1000)); // UTC + 9시간
+  koreaTime.setDate(koreaTime.getDate() + offset);
+  return koreaTime.toISOString().slice(0, 10);
 }
 
 /**
