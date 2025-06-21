@@ -103,12 +103,11 @@ router.post('/voice-parse', async (req, res) => {
       return res.status(400).json({ error: '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.' });
     }
 
-    // 날짜 문자열을 한국시간(KST)에서 UTC로 올바르게 변환
-    const startTime = new Date(result.startTime).toISOString();
-    const endTime = new Date(result.endTime).toISOString();
+    // KST 시간을 그대로 사용 (변환하지 않음)
+    const startTime = result.startTime;
+    const endTime = result.endTime;
 
-    console.log(`🕐 날짜 변환 (KST→UTC): "${result.startTime}" → "${startTime}"`);
-    console.log(`🕐 날짜 변환 (KST→UTC): "${result.endTime}" → "${endTime}"`);
+    console.log(`🕐 KST 시간 사용: "${startTime}"`);
 
     // 파싱된 결과만 반환 (저장하지 않음)
     const scheduleData = {
@@ -148,9 +147,9 @@ router.post('/voice-input', async (req, res) => {
 
     const userId = req.user.userId;
 
-    // 날짜 문자열을 한국시간(KST)에서 UTC로 올바르게 변환
-    const startTime = new Date(result.startTime).toISOString();
-    const endTime = new Date(result.endTime).toISOString();
+    // KST 시간을 그대로 저장 (변환하지 않음)
+    const startTime = result.startTime;
+    const endTime = result.endTime;
 
     const scheduleData = {
       title: result.title,

@@ -77,7 +77,7 @@ function CalendarApp() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [manualEvent, setManualEvent] = useState({
-    date: '', startTime: '', endTime: '',
+    date: '', endDate: '', startTime: '', endTime: '',
     title: '', memo: '', color: pastelColors[0],
     categoryCode: CATEGORY_OPTIONS[0].value,
     priority: PRIORITY_OPTIONS[1].value,
@@ -99,8 +99,8 @@ function CalendarApp() {
           id: item._id,
           _id: item._id,
           title: item.title,
-          start: dayjs.utc(item.startTime).local().toDate(),
-          end: dayjs.utc(item.endTime).local().toDate(),
+          start: new Date(item.startTime),
+          end: new Date(item.endTime),
           memo: item.description,
           color: item.color || pastelColors[0],
           categoryCode: item.categoryCode,
@@ -267,11 +267,13 @@ function CalendarApp() {
 
   // Select slot -> manual add modal
   const handleSelectSlot = slotInfo => {
-    const d = dayjs(slotInfo.start);
+    const startD = dayjs(slotInfo.start);
+    const endD = dayjs(slotInfo.end);
     setManualEvent({
-      date: d.format('YYYY-MM-DD'),
-      startTime: d.format('HH:mm'),
-      endTime: d.add(1, 'hour').format('HH:mm'),
+      date: startD.format('YYYY-MM-DD'),
+      endDate: endD.format('YYYY-MM-DD'),
+      startTime: startD.format('HH:mm'),
+      endTime: endD.format('HH:mm'),
       title: '',
       memo: '',
       color: pastelColors[0],
@@ -294,19 +296,20 @@ function CalendarApp() {
 
   const handleManualSubmit = async e => {
     e.preventDefault();
-    const { date, startTime, endTime, title, memo, color, categoryCode, priority, type, isAllDay } = manualEvent;
-    if (!date || (!isAllDay && (!startTime || !endTime)) || !title) return;
+    const { date, endDate, startTime, endTime, title, memo, color, categoryCode, priority, type, isAllDay } = manualEvent;
+    if (!date || !endDate || (!isAllDay && (!startTime || !endTime)) || !title) return;
 
     let start, end;
     if (isAllDay) {
-      // 하루종일 이벤트인 경우 00:00부터 23:59까지로 설정
+      // 하루종일 이벤트인 경우 시작날짜 00:00부터 종료날짜 23:59까지로 설정
       start = dayjs.tz(`${date} 00:00`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
-      end = dayjs.tz(`${date} 23:59`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
+      end = dayjs.tz(`${endDate} 23:59`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     } else {
-      // 일반 일정의 경우 로컬 시간대를 유지하면서 날짜와 시간 설정
-      const localDate = dayjs.tz(date, 'YYYY-MM-DD', 'Asia/Seoul');
-      start = localDate.hour(parseInt(startTime.split(':')[0])).minute(parseInt(startTime.split(':')[1])).toDate();
-      end = localDate.hour(parseInt(endTime.split(':')[0])).minute(parseInt(endTime.split(':')[1])).toDate();
+      // 일반 일정의 경우 시작날짜와 종료날짜를 각각 처리
+      const startDate = dayjs.tz(date, 'YYYY-MM-DD', 'Asia/Seoul');
+      const endDateObj = dayjs.tz(endDate, 'YYYY-MM-DD', 'Asia/Seoul');
+      start = startDate.hour(parseInt(startTime.split(':')[0])).minute(parseInt(startTime.split(':')[1])).toDate();
+      end = endDateObj.hour(parseInt(endTime.split(':')[0])).minute(parseInt(endTime.split(':')[1])).toDate();
     }
 
     const tmpId = `tmp-${Date.now()}`;
@@ -340,6 +343,7 @@ function CalendarApp() {
     setSelectedEvent({
       ...evt,
       date: dayjs(evt.start).format('YYYY-MM-DD'),
+      endDate: dayjs(evt.end).format('YYYY-MM-DD'),
       startTime: dayjs(evt.start).format('HH:mm'),
       endTime: dayjs(evt.end).format('HH:mm'),
       memo: evt.memo,
@@ -384,15 +388,15 @@ function CalendarApp() {
 
   const handleEditSubmit = async e => {
     e.preventDefault();
-    const { date, startTime, endTime, memo, color, categoryCode, priority, type, isAllDay, _id } = editEvent;
+    const { date, endDate, startTime, endTime, memo, color, categoryCode, priority, type, isAllDay, _id } = editEvent;
 
     let start, end;
     if (isAllDay) {
       start = dayjs.tz(`${date} 00:00`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
-      end = dayjs.tz(`${date} 23:59`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
+      end = dayjs.tz(`${endDate} 23:59`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     } else {
       start = dayjs.tz(`${date} ${startTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
-      end = dayjs.tz(`${date} ${endTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
+      end = dayjs.tz(`${endDate} ${endTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Seoul').toDate();
     }
 
     const updatedEvt = { ...editEvent, start, end, memo, color, categoryCode, priority, type, isAllDay };
@@ -531,15 +535,16 @@ function CalendarApp() {
       const result = await api.schedules.voiceParse(text);
       console.log('🎯 음성 파싱 결과:', result);
 
-      // 날짜와 시간 파싱
-      const startDate = new Date(result.schedule.startTime);
-      const endDate = new Date(result.schedule.endTime);
-
+      // KST 시간 문자열을 직접 파싱 (시간대 변환 방지)
+      const startTimeParts = result.schedule.startTime.split(' ');
+      const endTimeParts = result.schedule.endTime.split(' ');
+      
       // 일정 등록 모달에 파싱된 결과 설정
       const manualEventData = {
-        date: startDate.toISOString().split('T')[0], // yyyy-MM-dd 형식으로 변환
-        startTime: startDate.toTimeString().slice(0, 5), // HH:mm 형식으로 변환
-        endTime: endDate.toTimeString().slice(0, 5), // HH:mm 형식으로 변환
+        date: startTimeParts[0], // yyyy-MM-dd 부분만 추출
+        endDate: endTimeParts[0], // yyyy-MM-dd 부분만 추출
+        startTime: startTimeParts[1] || '00:00', // HH:mm 부분만 추출
+        endTime: endTimeParts[1] || '23:59', // HH:mm 부분만 추출
         title: result.schedule.title,
         memo: result.schedule.description || '',
         color: result.schedule.color || pastelColors[0],
@@ -727,16 +732,29 @@ function CalendarApp() {
             <div className="p-8 space-y-6">
               <form onSubmit={handleManualSubmit} className="space-y-4">
                 {/* 날짜 */}
-                <div>
-                  <label className="block text-gray-700 mb-1">날짜</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={manualEvent.date}
-                    onChange={handleManualChange}
-                    required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <label className="block text-gray-700 mb-1">시작 날짜</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={manualEvent.date}
+                      onChange={handleManualChange}
+                      required
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-gray-700 mb-1">종료 날짜</label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={manualEvent.endDate}
+                      onChange={handleManualChange}
+                      required
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
                 </div>
 
                 {/* 하루종일 체크박스 */}
@@ -1139,16 +1157,29 @@ function CalendarApp() {
             <div className="p-8 space-y-6">
               <form onSubmit={handleEditSubmit} className="space-y-5">
                 {/* 날짜 */}
-                <div>
-                  <label className="block text-gray-700 mb-1 text-sm font-medium">날짜</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={editEvent.date}
-                    onChange={handleEditChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                  />
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <label className="block text-gray-700 mb-1 text-sm font-medium">시작 날짜</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={editEvent.date}
+                      onChange={handleEditChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-gray-700 mb-1 text-sm font-medium">종료 날짜</label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={editEvent.endDate}
+                      onChange={handleEditChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                    />
+                  </div>
                 </div>
 
                 {/* 하루종일 체크박스 */}
