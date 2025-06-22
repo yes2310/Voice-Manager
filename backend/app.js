@@ -113,9 +113,14 @@ app.use('/api/auth', authRoutes);
 // 5) 정적 파일 서빙 (프로덕션 배포용)
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-// 6) 기본 라우트 (DB 연결 및 서버 실행 로직 제거 후)
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+// 6) SPA fallback - 모든 비-API 요청을 index.html로 리다이렉트
+app.get('*', (req, res) => {
+  // API 요청이 아닌 경우에만 index.html 서빙
+  if (!req.originalUrl.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+  } else {
+    res.status(404).json({ error: 'API 엔드포인트를 찾을 수 없습니다.' });
+  }
 });
 
 // 7) 에러 핸들링 미들웨어 (DB 연결 및 서버 실행 로직 제거 후)

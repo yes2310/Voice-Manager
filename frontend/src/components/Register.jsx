@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const Register = () => {
+const Register = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,7 +47,11 @@ const Register = () => {
 
       if (response.ok) {
         alert('회원가입이 완료되었습니다. 로그인해 주세요.');
-        navigate('/login');
+        if (onRegisterSuccess) {
+          onRegisterSuccess('login');
+        } else {
+          navigate('/login');
+        }
       } else {
         setError(data.error || '회원가입에 실패했습니다.');
       }
@@ -136,8 +140,14 @@ const Register = () => {
           <div className="text-center mt-4">
             <button
               type="button"
-              onClick={() => navigate('/login')}
-              className="text-indigo-600 hover:text-indigo-800"
+              onClick={() => {
+                if (onRegisterSuccess) {
+                  onRegisterSuccess('login');
+                } else {
+                  navigate('/login');
+                }
+              }}
+              className="text-indigo-600 hover:text-indigo-800 underline decoration-1 underline-offset-2"
             >
               이미 계정이 있으신가요? 로그인하기
             </button>

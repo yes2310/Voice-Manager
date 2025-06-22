@@ -1433,7 +1433,7 @@ function App() {
               />
             )
           } />
-          <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+          <Route path="/register" element={<Register onRegisterSuccess={() => window.location.href = '/login'} />} />
           <Route path="/reset-password" element={<ResetPassword onSuccess={() => window.location.href = '/login'} />} />
           <Route path="/" element={
             <PrivateRoute>
