@@ -583,7 +583,12 @@ function CalendarApp() {
 
           {/* 프로필 드롭다운 메뉴 */}
           {showProfileModal && (
-            <div className="absolute top-12 right-0 bg-white rounded-xl shadow-xl w-60 sm:w-72 z-50 border border-gray-100 overflow-hidden">
+            <>
+              <div 
+                className="fixed inset-0 z-40"
+                onClick={() => setShowProfileModal(false)}
+              ></div>
+              <div className="absolute top-12 right-0 bg-white rounded-xl shadow-xl w-60 sm:w-72 z-50 border border-gray-100 overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <p className="font-medium text-gray-800">{currentUser?.name}</p>
                 <p className="text-sm text-gray-600">{currentUser?.email}</p>
@@ -617,7 +622,8 @@ function CalendarApp() {
                   계정 관리
                 </button>
               </div>
-            </div>
+              </div>
+            </>
           )}
         </div>
       </header>
@@ -706,14 +712,23 @@ function CalendarApp() {
             onSelectEvent={handleSelectEvent}
             onEventDrop={onEventDrop}
             onEventResize={onEventResize}
+            longPressThreshold={150}
+            step={30}
+            timeslots={2}
           />
         </div>
       </main>
 
       {/* 수동 추가 모달 */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
+        <div 
+          className="fixed inset-0 flex items-center justify-center bg-black/30 p-4 z-50"
+          onClick={() => setShowModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center border-b border-gray-100">
               <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">일정 추가</h3>
               <button
@@ -897,8 +912,18 @@ function CalendarApp() {
       )}
 
       {/* 전체 프로필 모달 (계정 관리) */}
-      <div id="fullProfileModal" className="fixed inset-0 flex items-center justify-center bg-black/30 hidden p-4 z-50">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-4 sm:p-6 lg:p-8">
+      <div 
+        id="fullProfileModal" 
+        className="fixed inset-0 flex items-center justify-center bg-black/30 hidden p-4 z-50"
+        onClick={() => {
+          document.body.style.overflow = '';
+          document.getElementById('fullProfileModal').classList.add('hidden');
+        }}
+      >
+        <div 
+          className="bg-white rounded-xl shadow-2xl w-full max-w-md p-4 sm:p-6 lg:p-8"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-800">내 계정</h2>
             <button
@@ -993,8 +1018,14 @@ function CalendarApp() {
 
       {/* 일정 확인 모달 */}
       {showEventModal && selectedEvent && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div 
+          className="fixed inset-0 flex items-center justify-center bg-black/30 z-50 backdrop-blur-sm"
+          onClick={() => setShowEventModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* 색상이 적용된 헤더 */}
             <div
               className="px-8 py-4 flex justify-between items-center border-b border-gray-100"
@@ -1137,8 +1168,14 @@ function CalendarApp() {
 
       {/* 수정 모달 */}
       {editMode && editEvent && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div 
+          className="fixed inset-0 flex items-center justify-center bg-black/30 z-50 backdrop-blur-sm"
+          onClick={() => setEditMode(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-8 py-4 flex justify-between items-center border-b border-gray-100">
               <h3 className="text-2xl font-semibold text-gray-800">일정 수정</h3>
               <button
@@ -1322,8 +1359,14 @@ function CalendarApp() {
 
       {/* 요약 모달 */}
       {showSummaryModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+        <div 
+          className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
+          onClick={() => setShowSummaryModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center border-b border-gray-100">
               <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">📋 일정 요약</h3>
               <button
