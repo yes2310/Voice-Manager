@@ -249,19 +249,15 @@ function CalendarApp() {
   // 요약 모달 열기
   const handleSummaryModalOpen = () => {
     setShowSummaryModal(true);
-    // 현재 탭의 데이터가 없으면 가져오기
-    if (!summaryData[summaryTab]) {
-      fetchSummaryData(summaryTab);
-    }
+    // 항상 최신 데이터를 가져오기 (캐시 사용하지 않음)
+    fetchSummaryData(summaryTab);
   };
 
   // 요약 탭 변경
   const handleSummaryTabChange = (tab) => {
     setSummaryTab(tab);
-    // 해당 탭의 데이터가 없으면 가져오기
-    if (!summaryData[tab]) {
-      fetchSummaryData(tab);
-    }
+    // 항상 최신 데이터를 가져오기 (캐시 사용하지 않음)
+    fetchSummaryData(tab);
   };
 
   // Select slot -> manual add modal
