@@ -51,6 +51,14 @@ const TYPE_OPTIONS = [
   { value: 'repeat', label: '반복' },
 ];
 
+// 날짜 유틸리티 함수
+function getDateString(offset = 0) {
+  const d = new Date();
+  const koreaTime = new Date(d.getTime() + (9 * 60 * 60 * 1000)); // UTC + 9시간
+  koreaTime.setDate(koreaTime.getDate() + offset);
+  return koreaTime.toISOString().slice(0, 10);
+}
+
 // Calendar component separated for use with PrivateRoute
 function CalendarApp() {
   const { currentUser, logout } = useAuth();
@@ -557,12 +565,37 @@ function CalendarApp() {
       // 사용자가 모달에서 "확인"을 눌러야 실제 저장됨
     } catch (err) {
       console.error('음성 인식 처리 중 오류:', err);
-      if (err.message === '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.') {
+      
+      // OpenAI 응답을 제목에 넣어서 모달 열기
+      if (err.response?.data?.error === 'OPENAI_RESPONSE' && err.response?.data?.openaiMessage) {
+        const openaiMessage = err.response.data.openaiMessage;
+        console.log('OpenAI 응답을 제목에 설정:', openaiMessage);
+        
+        setManualEvent(prev => ({
+          ...prev,
+          title: openaiMessage,
+          date: getDateString(0),
+          endDate: getDateString(0),
+          startTime: '09:00',
+          endTime: '18:00'
+        }));
+        setShowModal(true);
+        setError('');
+      } else if (err.message === '시간, 일정 제목, 카테고리를 모두 말씀해 주세요.') {
         setError(err.message);
         setShowModal(true);
       } else {
-        setError('일정 등록 중 오류가 발생했습니다.');
+        // 기본 에러 처리
+        setManualEvent(prev => ({
+          ...prev,
+          title: '구체적인 일정 정보를 입력해주세요 (예: 내일 오후 2시 회의)',
+          date: getDateString(0),
+          endDate: getDateString(0),
+          startTime: '09:00',
+          endTime: '18:00'
+        }));
         setShowModal(true);
+        setError('');
       }
     } finally {
       setIsLoading(false);

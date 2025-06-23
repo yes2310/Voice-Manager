@@ -101,8 +101,14 @@ const classifyAndExtractSchedule = async (text) => {
     try {
       result = JSON.parse(response.choices[0].message.content);
     } catch (e) {
-      // JSON이 아니면 에러 메시지 반환
-      throw new Error('일정 정보를 추출하는데 실패했습니다. 다시 시도해주세요.');
+      // JSON이 아니면 OpenAI 응답을 그대로 반환 (사용자에게 표시하기 위해)
+      const openaiResponse = response.choices[0].message.content;
+      console.log('OpenAI 비-JSON 응답:', openaiResponse);
+      
+      // 특별한 에러 객체로 OpenAI 응답 포함
+      const error = new Error('OPENAI_RESPONSE');
+      error.openaiMessage = openaiResponse;
+      throw error;
     }
 
     if (!result.title || !result.category) {

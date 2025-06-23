@@ -128,6 +128,15 @@ router.post('/voice-parse', async (req, res) => {
     });
   } catch (err) {
     console.error('음성 인식 파싱 중 오류:', err);
+    
+    // OpenAI 응답이 포함된 특별한 에러인 경우
+    if (err.message === 'OPENAI_RESPONSE' && err.openaiMessage) {
+      return res.status(400).json({ 
+        error: 'OPENAI_RESPONSE',
+        openaiMessage: err.openaiMessage 
+      });
+    }
+    
     res.status(500).json({ error: err.message });
   }
 });
