@@ -23,6 +23,14 @@ function getDateString(offset = 0) {
   return koreaTime.toISOString().slice(0, 10);
 }
 
+function getCurrentYearMonth() {
+  const d = new Date();
+  const koreaTime = new Date(d.getTime() + (9 * 60 * 60 * 1000)); // UTC + 9시간
+  const year = koreaTime.getFullYear();
+  const month = String(koreaTime.getMonth() + 1).padStart(2, '0');
+  return { year, month };
+}
+
 /**
  * 텍스트에서 카테고리 및 일정 정보를 추출하는 함수
  * @param {string} text - 음성 인식 결과 텍스트
@@ -35,47 +43,47 @@ const classifyAndExtractSchedule = async (text) => {
     const today = getDateString(0);
     const tomorrow = getDateString(1);
     const dayAfter = getDateString(2);
+    const { year, month } = getCurrentYearMonth();
 
     const systemPrompt = `당신은 일정을 분석하는 AI 어시스턴트입니다. 
+사용자의 음성 입력을 분석하여 일정을 등록해주세요.
+
 다음 카테고리 중 하나를 선택하여 일정을 분류해주세요:
-- school (학업): 학교, 학원, 공부, 시험, 과제 관련
+- school (학업): 학교, 학원, 공부, 시험, 과제, 교수님 관련
 - housework (가사): 청소, 빨래, 요리, 정리 등 가사 관련
 - work (업무): 회의, 프로젝트, 업무 관련
 - selfdev (자기계발): 독서, 운동, 취미, 강의 등 개인 성장 관련
 - family (가족): 가족 모임, 가족 행사, 가족 관련
 - health (건강): 병원, 건강검진, 운동, 식단 관련
-- event (행사): 모임, 파티, 축하, 기념일 등 행사 관련
+- event (행사): 모임, 파티, 축하, 기념일, 식사약속 등 행사 관련
 - goal (목표): 목표 달성, 계획, 리뷰 관련
 
-현재 날짜: ${today}
+현재 날짜: ${today} (오늘)
+현재 년월: ${year}년 ${month}월
 
-응답은 다음 JSON 형식으로 해주세요:
+응답은 반드시 다음 JSON 형식으로만 해주세요. 다른 설명은 하지 마세요:
 {
   "title": "일정 제목",
   "startTime": "YYYY-MM-DD HH:mm",
-  "endTime": "YYYY-MM-DD HH:mm",
+  "endTime": "YYYY-MM-DD HH:mm", 
   "category": "카테고리 코드",
-  "isAllDay": true/false
+  "isAllDay": false
 }
 
 날짜 처리 규칙:
-1. 날짜가 언급되지 않은 경우 ${today} 사용
-2. "오늘"은 ${today} 사용
-3. "내일"은 ${tomorrow} 사용
-4. "모레"는 ${dayAfter} 사용
-
-시간 처리 규칙:
-1. "오전/아침"은 00:00-11:59
-2. "오후"는 12:00-23:59
-3. "저녁"은 18:00-23:59
-4. "새벽"은 00:00-05:59
-5. 시간이 언급되지 않은 경우 하루종일로 설정
+1. "N일"이라고 하면 현재 달의 N일로 해석 (예: "23일" = "${year}-${month}-23")
+2. "N일부터 M일까지"라고 하면 첫날 09:00에 시작해서 마지막날 18:00에 종료
+3. "오늘"은 ${today}
+4. "내일"은 ${tomorrow}
+5. "모레"는 ${dayAfter}
+6. 시간이 언급되지 않으면 09:00-18:00으로 기본 설정
 
 예시:
+- "23일부터 26일까지 교수님과 식사" -> startTime: "${year}-${month}-23 09:00", endTime: "${year}-${month}-26 18:00", category: "school"
 - "오늘 오후 2시 회의" -> startTime: "${today} 14:00", endTime: "${today} 15:00"
-- "내일 아침 9시 미팅" -> startTime: "${tomorrow} 09:00", endTime: "${tomorrow} 10:00"
-- "모레 저녁 7시 저녁 약속" -> startTime: "${dayAfter} 19:00", endTime: "${dayAfter} 20:00"
-`;
+- "내일 저녁 7시 저녁약속" -> startTime: "${tomorrow} 19:00", endTime: "${tomorrow} 20:00", category: "event"
+
+반드시 JSON만 응답하세요.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',

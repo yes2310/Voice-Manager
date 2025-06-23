@@ -32,7 +32,9 @@ const scheduleSchema = new mongoose.Schema({
   },
   repeatPattern: {
     type: String,
-    enum: ['DAILY', 'WEEKLY', 'MONTHLY'],
+    enum: ['DAILY', 'WEEKLY', 'MONTHLY', null],
+    required: false,
+    default: null,
   },
 
   categoryCode: {

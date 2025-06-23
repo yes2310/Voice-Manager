@@ -126,7 +126,6 @@ function CalendarApp() {
       endTime: evt.end.toISOString(),
       dueDate: null,
       isRepeating: false,
-      repeatPattern: null,
       categoryCode: evt.categoryCode,
       priority: evt.priority,
       type: evt.type,
