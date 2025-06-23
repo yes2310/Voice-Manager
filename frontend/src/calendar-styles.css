@@ -196,18 +196,27 @@
 /* Month 뷰 이벤트 높이 최적화 */
 .rbc-month-view .rbc-event {
   padding: 0 !important;
-  min-height: 20px !important;
-  margin-bottom: 1px !important;
+  min-height: 18px !important;
+  margin: 0 0 0.5px 0 !important;
+  font-size: 0.7rem !important;
 }
 
 /* Month 뷰 이벤트 내용 최적화 */
 .rbc-month-view .rbc-event-content {
-  padding: 1px 4px !important;
-  font-size: 0.75rem !important;
-  line-height: 1.2 !important;
+  padding: 1px 3px !important;
+  font-size: 0.7rem !important;
+  line-height: 1.1 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  height: 16px !important;
+}
+
+/* Month 뷰에서 더 많은 이벤트 표시 */
+.rbc-month-view .rbc-show-more {
+  font-size: 0.65rem !important;
+  padding: 1px 3px !important;
+  margin: 0.5px 0 0 0 !important;
 }
 
 .rbc-event:hover {

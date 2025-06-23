@@ -603,8 +603,8 @@ function CalendarApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 p-2 sm:p-4 lg:p-6">
-      <header className="max-w-5xl mx-auto mb-4 sm:mb-6 flex justify-between items-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 p-1 sm:p-2 lg:p-3">
+              <header className="max-w-5xl mx-auto flex justify-between items-center mb-2 sm:mb-3">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500">Voice Manager</h1>
         <div className="flex items-center space-x-4 relative">
           <button
@@ -661,7 +661,7 @@ function CalendarApp() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
+      <main className="max-w-5xl mx-auto space-y-2 sm:space-y-3 lg:space-y-4">
         {/* 음성 버튼 & 요약 버튼 */}
         <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
           <button
@@ -721,7 +721,7 @@ function CalendarApp() {
         )}
 
         {/* Calendar */}
-        <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-2 sm:p-4 lg:p-6 transition-all duration-300 border border-gray-100 hover:shadow-2xl">
+        <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl transition-all duration-300 border border-gray-100 hover:shadow-2xl p-1 sm:p-2 lg:p-3">
           <DnDCalendar
             localizer={localizer}
             events={events}
@@ -735,7 +735,9 @@ function CalendarApp() {
             endAccessor="end"
             selectable
             resizable
-            style={{ height: window.innerWidth <= 640 ? '60vh' : '70vh' }}
+            style={{ 
+              height: window.innerWidth >= 1280 && window.innerWidth <= 1440 ? '98vh' : '95vh'
+            }}
             defaultView={window.innerWidth <= 640 ? 'day' : 'week'}
             views={['month', 'week', 'day']}
             min={minTime}
