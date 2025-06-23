@@ -570,9 +570,9 @@ function CalendarApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 p-6">
-      <header className="max-w-5xl mx-auto mb-6 flex justify-between items-center">
-        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500">Voice Manager</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 p-2 sm:p-4 lg:p-6">
+      <header className="max-w-5xl mx-auto mb-4 sm:mb-6 flex justify-between items-center">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500">Voice Manager</h1>
         <div className="flex items-center space-x-4 relative">
           <button
             onClick={() => setShowProfileModal(!showProfileModal)}
@@ -583,7 +583,7 @@ function CalendarApp() {
 
           {/* 프로필 드롭다운 메뉴 */}
           {showProfileModal && (
-            <div className="absolute top-12 right-0 bg-white rounded-xl shadow-xl w-72 z-50 border border-gray-100 overflow-hidden">
+            <div className="absolute top-12 right-0 bg-white rounded-xl shadow-xl w-60 sm:w-72 z-50 border border-gray-100 overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <p className="font-medium text-gray-800">{currentUser?.name}</p>
                 <p className="text-sm text-gray-600">{currentUser?.email}</p>
@@ -622,19 +622,19 @@ function CalendarApp() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto space-y-8">
+      <main className="max-w-5xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
         {/* 음성 버튼 & 요약 버튼 */}
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
           <button
             onClick={recording ? stopRecognition : startRecognition}
-            className={`flex items-center space-x-2 px-8 py-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${recording
+            className={`flex items-center justify-center space-x-2 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${recording
               ? "bg-red-600 text-white ring-4 ring-red-300 animate-pulse"
               : "bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
               }`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className={`h-5 w-5 ${recording ? "animate-bounce" : ""}`}
+              className={`h-4 w-4 sm:h-5 sm:w-5 ${recording ? "animate-bounce" : ""}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -646,16 +646,16 @@ function CalendarApp() {
                 d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
               />
             </svg>
-            <span className="font-medium">{recording ? "음성 인식 중지" : "음성 인식 시작"}</span>
+            <span className="font-medium text-sm sm:text-base">{recording ? "음성 인식 중지" : "음성 인식 시작"}</span>
           </button>
 
           <button
             onClick={handleSummaryModalOpen}
-            className="flex items-center space-x-2 px-8 py-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+            className="flex items-center justify-center space-x-2 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-600 text-white"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
+              className="h-4 w-4 sm:h-5 sm:w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -667,22 +667,22 @@ function CalendarApp() {
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <span className="font-medium">일정 요약</span>
+            <span className="font-medium text-sm sm:text-base">일정 요약</span>
           </button>
         </div>
 
         {/* 실시간 인식 텍스트 박스: recording 중이거나 transcript 있을 때만 */}
         {(recording || transcript) && (
-          <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-4 text-gray-800 mb-6 min-h-[3rem] relative border-l-4 border-indigo-500 transition-all duration-500">
+          <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-3 sm:p-4 text-gray-800 mb-4 sm:mb-6 min-h-[3rem] relative border-l-4 border-indigo-500 transition-all duration-500">
             <div className={`absolute top-0 left-0 h-full max-w-full bg-indigo-50 rounded-l-lg transition-all duration-500 ${recording ? "animate-pulse" : ""}`} style={{ width: recording ? '30%' : '0%' }}></div>
-            <p className="relative z-10">
+            <p className="relative z-10 text-sm sm:text-base">
               {transcript || '음성을 인식 중입니다...'}
             </p>
           </div>
         )}
 
         {/* Calendar */}
-        <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-6 transition-all duration-300 border border-gray-100 hover:shadow-2xl">
+        <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-2 sm:p-4 lg:p-6 transition-all duration-300 border border-gray-100 hover:shadow-2xl">
           <DnDCalendar
             localizer={localizer}
             events={events}
@@ -696,8 +696,8 @@ function CalendarApp() {
             endAccessor="end"
             selectable
             resizable
-            style={{ height: '70vh' }}
-            defaultView="week"
+            style={{ height: window.innerWidth <= 640 ? '60vh' : '70vh' }}
+            defaultView={window.innerWidth <= 640 ? 'day' : 'week'}
             views={['month', 'week', 'day']}
             min={minTime}
             max={maxTime}
@@ -712,10 +712,10 @@ function CalendarApp() {
 
       {/* 수동 추가 모달 */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-8 py-4 flex justify-between items-center border-b border-gray-100">
-              <h3 className="text-2xl font-semibold text-gray-800">일정 추가</h3>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
+            <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center border-b border-gray-100">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">일정 추가</h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-gray-400 hover:text-gray-700 text-xl transition-colors"
@@ -724,30 +724,30 @@ function CalendarApp() {
               </button>
             </div>
 
-            <div className="p-8 space-y-6">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 overflow-y-auto max-h-[calc(90vh-60px)]">
               <form onSubmit={handleManualSubmit} className="space-y-4">
                 {/* 날짜 */}
-                <div className="flex space-x-4">
+                <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                   <div className="flex-1">
-                    <label className="block text-gray-700 mb-1">시작 날짜</label>
+                    <label className="block text-gray-700 mb-1 text-sm sm:text-base">시작 날짜</label>
                     <input
                       type="date"
                       name="date"
                       value={manualEvent.date}
                       onChange={handleManualChange}
                       required
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-gray-700 mb-1">종료 날짜</label>
+                    <label className="block text-gray-700 mb-1 text-sm sm:text-base">종료 날짜</label>
                     <input
                       type="date"
                       name="endDate"
                       value={manualEvent.endDate}
                       onChange={handleManualChange}
                       required
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                     />
                   </div>
                 </div>
@@ -769,64 +769,64 @@ function CalendarApp() {
 
                 {/* 시간 - 하루종일이 아닐 때만 표시 */}
                 {!manualEvent.isAllDay && (
-                  <div className="flex space-x-4">
+                  <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                     <div className="flex-1">
-                      <label className="block text-gray-700 mb-1">시작 시간</label>
+                      <label className="block text-gray-700 mb-1 text-sm sm:text-base">시작 시간</label>
                       <input
                         type="time"
                         name="startTime"
                         value={manualEvent.startTime}
                         onChange={handleManualChange}
                         required
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-gray-700 mb-1">종료 시간</label>
+                      <label className="block text-gray-700 mb-1 text-sm sm:text-base">종료 시간</label>
                       <input
                         type="time"
                         name="endTime"
                         value={manualEvent.endTime}
                         onChange={handleManualChange}
                         required
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                       />
                     </div>
                   </div>
                 )}
                 {/* 제목 */}
                 <div>
-                  <label className="block text-gray-700 mb-1">제목</label>
+                  <label className="block text-gray-700 mb-1 text-sm sm:text-base">제목</label>
                   <input
                     type="text"
                     name="title"
                     value={manualEvent.title}
                     onChange={handleManualChange}
                     required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                   />
                 </div>
                 {/* 메모 */}
                 <div>
-                  <label className="block text-gray-700 mb-1">메모</label>
+                  <label className="block text-gray-700 mb-1 text-sm sm:text-base">메모</label>
                   <input
                     type="text"
                     name="memo"
                     value={manualEvent.memo}
                     onChange={handleManualChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                   />
                 </div>
                 {/* 색상 선택 */}
                 <div>
-                  <label className="block text-gray-700 mb-1">색상 선택</label>
-                  <div className="flex space-x-2">
+                  <label className="block text-gray-700 mb-1 text-sm sm:text-base">색상 선택</label>
+                  <div className="flex flex-wrap gap-2">
                     {pastelColors.map(color => (
                       <button
                         key={color}
                         type="button"
                         onClick={() => setManualEvent(prev => ({ ...prev, color }))}
-                        className={`w-8 h-8 rounded-full border-2 ${manualEvent.color === color ? 'border-gray-800' : 'border-transparent'
+                        className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 ${manualEvent.color === color ? 'border-gray-800' : 'border-transparent'
                           }`}
                         style={{ backgroundColor: color }}
                       />
@@ -835,12 +835,12 @@ function CalendarApp() {
                 </div>
                 {/* 분류 */}
                 <div>
-                  <label className="block text-gray-700 mb-1">분류</label>
+                  <label className="block text-gray-700 mb-1 text-sm sm:text-base">분류</label>
                   <select
                     name="categoryCode"
                     value={manualEvent.categoryCode}
                     onChange={handleManualChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                   >
                     {CATEGORY_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -849,12 +849,12 @@ function CalendarApp() {
                 </div>
                 {/* 우선순위 */}
                 <div>
-                  <label className="block text-gray-700 mb-1">우선순위</label>
+                  <label className="block text-gray-700 mb-1 text-sm sm:text-base">우선순위</label>
                   <select
                     name="priority"
                     value={manualEvent.priority}
                     onChange={handleManualChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                   >
                     {PRIORITY_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -863,29 +863,29 @@ function CalendarApp() {
                 </div>
                 {/* 유형 */}
                 <div>
-                  <label className="block text-gray-700 mb-1">유형</label>
+                  <label className="block text-gray-700 mb-1 text-sm sm:text-base">유형</label>
                   <select
                     name="type"
                     value={manualEvent.type}
                     onChange={handleManualChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                   >
                     {TYPE_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
                 </div>
-                <div className="flex justify-end space-x-3 mt-6">
+                <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-6">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-5 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition"
+                    className="px-4 sm:px-5 py-2 sm:py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition text-sm sm:text-base"
                   >
                     취소
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
+                    className="px-4 sm:px-5 py-2 sm:py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition text-sm sm:text-base"
                   >
                     추가
                   </button>
@@ -897,8 +897,8 @@ function CalendarApp() {
       )}
 
       {/* 전체 프로필 모달 (계정 관리) */}
-      <div id="fullProfileModal" className="fixed inset-0 flex items-center justify-center bg-black/30 hidden">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8">
+      <div id="fullProfileModal" className="fixed inset-0 flex items-center justify-center bg-black/30 hidden p-4 z-50">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-4 sm:p-6 lg:p-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-800">내 계정</h2>
             <button
@@ -1322,10 +1322,10 @@ function CalendarApp() {
 
       {/* 요약 모달 */}
       {showSummaryModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
-            <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100">
-              <h3 className="text-2xl font-semibold text-gray-800">📋 일정 요약</h3>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center border-b border-gray-100">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">📋 일정 요약</h3>
               <button
                 onClick={() => setShowSummaryModal(false)}
                 className="text-gray-400 hover:text-gray-700 text-xl transition-colors"
@@ -1335,8 +1335,8 @@ function CalendarApp() {
             </div>
 
             {/* 탭 네비게이션 */}
-            <div className="px-6 py-4 border-b border-gray-100">
-              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+              <div className="grid grid-cols-2 sm:flex sm:space-x-1 gap-1 sm:gap-0 bg-gray-100 p-1 rounded-lg">
                 {[
                   { key: 'today', label: '오늘' },
                   { key: 'tomorrow', label: '내일' },
@@ -1346,7 +1346,7 @@ function CalendarApp() {
                   <button
                     key={tab.key}
                     onClick={() => handleSummaryTabChange(tab.key)}
-                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${summaryTab === tab.key
+                    className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-all ${summaryTab === tab.key
                       ? 'bg-white text-indigo-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                       }`}
@@ -1358,31 +1358,31 @@ function CalendarApp() {
             </div>
 
             {/* 요약 내용 */}
-            <div className="p-6 max-h-96 overflow-y-auto">
+            <div className="p-3 sm:p-6 max-h-[50vh] sm:max-h-96 overflow-y-auto">
               {summaryLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                  <span className="ml-3 text-gray-600">요약 정보를 가져오는 중...</span>
+                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-indigo-600"></div>
+                  <span className="ml-3 text-gray-600 text-sm sm:text-base">요약 정보를 가져오는 중...</span>
                 </div>
               ) : (
-                <div className="whitespace-pre-line text-gray-700 leading-relaxed">
+                <div className="whitespace-pre-line text-gray-700 leading-relaxed text-sm sm:text-base">
                   {summaryData[summaryTab] || '해당 기간의 일정 정보가 없습니다.'}
                 </div>
               )}
             </div>
 
             {/* 하단 버튼 */}
-            <div className="px-6 py-4 border-t border-gray-100 flex justify-between">
+            <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between">
               <button
                 onClick={() => fetchSummaryData(summaryTab)}
                 disabled={summaryLoading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 🔄 새로고침
               </button>
               <button
                 onClick={() => setShowSummaryModal(false)}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+                className="px-3 sm:px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm sm:text-base"
               >
                 닫기
               </button>
